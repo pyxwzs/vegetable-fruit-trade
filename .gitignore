@@ -1,0 +1,47 @@
+# ──────────────────────────────────────────────
+# macOS
+# ──────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ──────────────────────────────────────────────
+# IntelliJ IDEA / IDE
+# ──────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# ──────────────────────────────────────────────
+# Maven / Spring Boot 后端
+# ──────────────────────────────────────────────
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+!backend/.mvn/wrapper/maven-wrapper.properties
+backend/*.log
+
+# ──────────────────────────────────────────────
+# Node / Vue 前端
+# ──────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# ──────────────────────────────────────────────
+# 运行日志
+# ──────────────────────────────────────────────
+logs/
+*.log
+
+# ──────────────────────────────────────────────
+# 环境配置（含密码，不提交）
+# ──────────────────────────────────────────────
+.env
+.env.local
+*.env

@@ -1,0 +1,98 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: vegetable-fruit-trade
+
+  # spring-boot-devtools：编译产出更新到 classpath 后自动重启（非 Java 热替换）
+  devtools:
+    restart:
+      enabled: true
+      # 这些目录变更不触发重启（仍可由前端 devServer 处理）
+      exclude: static/**,public/**,templates/**,META-INF/maven/**
+
+  datasource:
+    url: jdbc:mysql://100.64.0.1:3306/trade_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: Zxyd1xj3NsT6PottAYNL
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        # 添加缓存配置
+        cache:
+          use_second_level_cache: false  # 禁用二级缓存
+          use_query_cache: false
+        # 会话管理
+        jdbc:
+          batch_size: 20
+        # 懒加载配置
+        enable_lazy_load_no_trans: false
+    open-in-view: false  # 禁用 Open-in-View
+  redis:
+    host: 100.64.0.1
+    port: 6379
+    password: dbmwbKYofoDEp5hF0vkW
+    database: 0
+    timeout: 10000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: 2784295392@qq.com
+    # QQ 邮箱此处填「SMTP 授权码」，非 QQ 登录密码
+    password: bmsyezasgpxxdgbh
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+# 认证：系统级是否允许「登录邮箱二次验证」功能（修改后需重启）。具体账号是否启用由 users.mfa_login_enabled 决定。
+auth:
+  mfa-login-enabled: false
+
+# JWT配置
+jwt:
+  secret: your-secret-key-here-change-in-production
+  expiration: 86400000 # 访问令牌有效期（毫秒），默认24小时
+  refresh-expiration: 604800000 # 刷新令牌 7 天（未勾选「记住我」）
+  refresh-expiration-remember: 2592000000 # 刷新令牌 30 天（勾选「记住我」）
+
+# MinIO配置
+minio:
+  enabled: true  # 临时禁用 MinIO（布尔值须为 true/false，勿拼成 ture）
+  endpoint: http://100.64.0.1:9000
+  access-key: minioadmin
+  secret-key: minioadmin123
+  bucket-name: trade-files
+
+# 日志配置
+logging:
+  level:
+    com.trade: DEBUG
+    org.springframework.security: INFO
+  file:
+    name: logs/trade-system.log
+    max-size: 10MB
+    max-history: 30
