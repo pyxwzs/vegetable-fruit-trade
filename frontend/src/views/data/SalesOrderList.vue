@@ -185,7 +185,6 @@
       </div>
       <template #footer>
         <el-button @click="detailVisible = false">关闭</el-button>
-        <el-button v-if="detailOrder && canPrint(detailOrder)" @click="printOrder">打印送货单</el-button>
         <el-button
             v-if="detailOrder && canSalesReturn && canReturn(detailOrder)"
             type="warning"
@@ -473,34 +472,6 @@ const openDetail = async (row) => {
   } catch {
     ElMessage.error('加载详情失败')
   }
-}
-
-const canPrint = (o) => o && ['APPROVED', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(o.status)
-
-const printOrder = () => {
-  const o = detailOrder.value
-  if (!o) return
-  const rows = (o.items || [])
-    .map(
-      (it) =>
-        `<tr><td>${it.product?.name || ''}</td><td>${it.quantity}</td><td>${Number(it.price).toFixed(2)}</td><td>${Number(it.amount).toFixed(2)}</td></tr>`
-    )
-    .join('')
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>送货单 ${o.orderNo}</title>
-    <style>body{font-family:sans-serif;padding:20px;}table{border-collapse:collapse;width:100%;}td,th{border:1px solid #333;padding:6px;}</style></head><body>
-    <h2>送货单</h2><p>单号：${o.orderNo}</p><p>客户：${o.customer?.name || ''}</p><p>收货地址：${o.customer?.address || '—'}</p>
-    <table><thead><tr><th>商品</th><th>数量</th><th>单价</th><th>金额</th></tr></thead><tbody>${rows}</tbody></table>
-    <p>合计：¥${Number(o.totalAmount).toFixed(2)}</p></body></html>`
-  const w = window.open('', '_blank')
-  if (!w) {
-    ElMessage.warning('请允许弹出窗口以打印')
-    return
-  }
-  w.document.write(html)
-  w.document.close()
-  w.focus()
-  w.print()
-  w.close()
 }
 
 const canReturn = (o) => o && ['SHIPPED', 'DELIVERED', 'COMPLETED'].includes(o.status)
