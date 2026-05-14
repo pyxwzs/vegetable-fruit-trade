@@ -17,6 +17,9 @@ import java.util.Optional;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long>, JpaSpecificationExecutor<Inventory> {
+
+    boolean existsByProduct_Id(Long productId);
+
     Optional<Inventory> findByProductAndWarehouseAndBatchNo(Product product, Warehouse warehouse, String batchNo);
 
     List<Inventory> findByProduct(Product product);

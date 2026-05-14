@@ -96,6 +96,9 @@ public class CustomerService {
         if (!customerRepository.existsById(id)) {
             throw new BusinessException("客户不存在");
         }
+        if (salesOrderRepository.existsByCustomer_Id(id)) {
+            throw new BusinessException("该客户已关联销售订单，无法删除。可将客户状态设为停用。");
+        }
         customerRepository.deleteById(id);
     }
 

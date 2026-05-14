@@ -3,6 +3,7 @@ package com.trade.service;
 import com.trade.dto.SupplierDTO;
 import com.trade.entity.Supplier;
 import com.trade.exception.BusinessException;
+import com.trade.repository.PurchaseOrderRepository;
 import com.trade.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import java.util.List;
 public class SupplierService {
 
     private final SupplierRepository supplierRepository;
+    private final PurchaseOrderRepository purchaseOrderRepository;
 
     public Page<Supplier> getSuppliers(String keyword, String status, Pageable pageable) {
         Specification<Supplier> spec = (root, query, cb) -> {
@@ -70,6 +72,9 @@ public class SupplierService {
     public void delete(Long id) {
         if (!supplierRepository.existsById(id)) {
             throw new BusinessException("供应商不存在");
+        }
+        if (purchaseOrderRepository.existsBySupplier_Id(id)) {
+            throw new BusinessException("该供应商已关联采购订单，无法删除。可将供应商状态设为停用。");
         }
         supplierRepository.deleteById(id);
     }

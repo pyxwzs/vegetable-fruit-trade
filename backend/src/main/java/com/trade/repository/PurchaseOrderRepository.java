@@ -19,6 +19,8 @@ import java.util.Optional;
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Long>, JpaSpecificationExecutor<PurchaseOrder> {
 
+    boolean existsBySupplier_Id(Long supplierId);
+
     /**
      * 分页列表与详情序列化 JSON 时需一并取出关联。
      * 注意：不能包含 purchaser.roles.permissions，否则多集合 JOIN 会产生笛卡尔积，

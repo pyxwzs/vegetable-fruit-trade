@@ -20,6 +20,8 @@ import java.util.Optional;
 @Repository
 public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, JpaSpecificationExecutor<SalesOrder> {
 
+    boolean existsByCustomer_Id(Long customerId);
+
     @EntityGraph(attributePaths = {
             "customer",
             "salesman",

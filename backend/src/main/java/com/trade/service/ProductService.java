@@ -7,8 +7,12 @@ import com.trade.entity.Product;
 import com.trade.entity.ProductPriceHistory;
 import com.trade.exception.BusinessException;
 import com.trade.repository.CategoryRepository;
+import com.trade.repository.InventoryRepository;
+import com.trade.repository.InventoryTransferLogRepository;
 import com.trade.repository.ProductPriceHistoryRepository;
 import com.trade.repository.ProductRepository;
+import com.trade.repository.PurchaseOrderItemRepository;
+import com.trade.repository.SalesOrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -39,6 +43,10 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductPriceHistoryRepository productPriceHistoryRepository;
+    private final InventoryRepository inventoryRepository;
+    private final PurchaseOrderItemRepository purchaseOrderItemRepository;
+    private final SalesOrderItemRepository salesOrderItemRepository;
+    private final InventoryTransferLogRepository inventoryTransferLogRepository;
 
     private static final DataFormatter CELL_FORMAT = new DataFormatter();
     private static final int MAX_IMPORT_ERRORS = 40;
@@ -170,6 +178,19 @@ public class ProductService {
         if (!productRepository.existsById(id)) {
             throw new BusinessException("商品不存在");
         }
+        if (inventoryRepository.existsByProduct_Id(id)) {
+            throw new BusinessException("该商品仍存在库存记录，无法删除。请先处理库存或改用「停用」。");
+        }
+        if (purchaseOrderItemRepository.existsByProduct_Id(id)) {
+            throw new BusinessException("该商品已被采购订单引用，无法删除。可改用「停用」。");
+        }
+        if (salesOrderItemRepository.existsByProduct_Id(id)) {
+            throw new BusinessException("该商品已被销售订单引用，无法删除。可改用「停用」。");
+        }
+        if (inventoryTransferLogRepository.existsByProduct_Id(id)) {
+            throw new BusinessException("该商品存在调拨历史记录，无法删除。可改用「停用」。");
+        }
+        productPriceHistoryRepository.deleteByProduct_Id(id);
         productRepository.deleteById(id);
     }
 
