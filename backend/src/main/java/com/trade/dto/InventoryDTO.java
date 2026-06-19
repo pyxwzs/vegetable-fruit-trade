@@ -18,7 +18,6 @@ public class InventoryDTO {
     private BigDecimal frozenQuantity;
     private LocalDate productionDate;
     private LocalDate expiryDate;
-    private BigDecimal purchasePrice;
     private String location;
     private String status;
 }

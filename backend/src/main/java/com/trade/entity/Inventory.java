@@ -41,9 +41,6 @@ public class Inventory {
 
     private LocalDate expiryDate; // 过期日期
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal purchasePrice; // 采购价
-
     private String location; // 库位
 
     @Enumerated(EnumType.STRING)

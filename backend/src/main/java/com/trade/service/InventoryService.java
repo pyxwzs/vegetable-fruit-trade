@@ -77,11 +77,9 @@ public class InventoryService {
 
             if (movementDTO.getExpiryDate() != null) {
                 inventory.setExpiryDate(movementDTO.getExpiryDate());
-            } else if (movementDTO.getProductionDate() != null && product.getShelfLife() != null) {
-                inventory.setExpiryDate(movementDTO.getProductionDate().plusDays(product.getShelfLife()));
+            } else if (movementDTO.getProductionDate() != null) {
+                inventory.setProductionDate(movementDTO.getProductionDate());
             }
-
-            inventory.setPurchasePrice(movementDTO.getPrice());
             inventory.setLocation(movementDTO.getLocation());
             inventory.setQuantity(movementDTO.getQuantity());
             inventory.setAvailableQuantity(movementDTO.getQuantity());
@@ -208,7 +206,7 @@ public class InventoryService {
         in.setWarehouseId(toWh.getId());
         in.setBatchNo(src.getBatchNo());
         in.setQuantity(q);
-        in.setPrice(src.getPurchasePrice());
+        in.setPrice(null);
         in.setProductionDate(src.getProductionDate());
         in.setExpiryDate(src.getExpiryDate());
         in.setLocation(src.getLocation());

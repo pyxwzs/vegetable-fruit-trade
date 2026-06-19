@@ -51,37 +51,18 @@ CREATE TABLE categories (
 
 -- ── 商品 ──────────────────────────────────────────────────────
 CREATE TABLE products (
-    id             BIGINT        PRIMARY KEY AUTO_INCREMENT,
-    product_code   VARCHAR(50)   NOT NULL UNIQUE,
-    name           VARCHAR(100)  NOT NULL,
-    category_id    BIGINT,
-    unit           VARCHAR(20),
-    specification  VARCHAR(100),
-    purchase_price DECIMAL(10,2),
-    sale_price     DECIMAL(10,2),
-    shelf_life     INT           COMMENT '保质期（天）',
-    description    TEXT,
-    status         ENUM('ENABLED','DISABLED') DEFAULT 'ENABLED',
-    create_time    DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_time    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id            BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    product_code  VARCHAR(50)  NOT NULL UNIQUE,
+    name          VARCHAR(100) NOT NULL,
+    category_id   BIGINT,
+    unit          VARCHAR(20),
+    specification VARCHAR(100),
+    status        ENUM('ENABLED','DISABLED') DEFAULT 'ENABLED',
+    create_time   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time   DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id),
     INDEX idx_product_code (product_code),
     INDEX idx_name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- ── 商品价格变动历史 ──────────────────────────────────────────
-CREATE TABLE product_price_history (
-    id                  BIGINT        PRIMARY KEY AUTO_INCREMENT,
-    product_id          BIGINT        NOT NULL,
-    prev_purchase_price DECIMAL(10,2),
-    prev_sale_price     DECIMAL(10,2),
-    new_purchase_price  DECIMAL(10,2),
-    new_sale_price      DECIMAL(10,2),
-    source              VARCHAR(20)   NOT NULL COMMENT 'MANUAL / IMPORT',
-    operator_username   VARCHAR(64),
-    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    INDEX idx_product_time (product_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ── 仓库 ──────────────────────────────────────────────────────
@@ -108,7 +89,6 @@ CREATE TABLE inventories (
     frozen_quantity    DECIMAL(10,3) DEFAULT 0,
     production_date    DATE,
     expiry_date        DATE,
-    purchase_price     DECIMAL(10,2),
     location           VARCHAR(50),
     status             ENUM('NORMAL','EXPIRING','EXPIRED','FROZEN') DEFAULT 'NORMAL',
     create_time        DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -288,19 +268,19 @@ INSERT INTO categories (code, name, sort_order) VALUES
 -- ══════════════════════════════════════════════════════════════
 
 -- 商品
-INSERT INTO products (product_code, name, category_id, unit, specification, purchase_price, sale_price, shelf_life, status) VALUES
-    ('P001', '西红柿', 1, '斤', '新鲜',    2.50,  3.80,   7, 'ENABLED'),
-    ('P002', '黄瓜',   1, '斤', '顶花',    1.80,  2.60,   5, 'ENABLED'),
-    ('P003', '土豆',   1, '斤', '黄心',    1.20,  1.90,  30, 'ENABLED'),
-    ('P004', '白菜',   1, '斤', '大棵',    0.80,  1.30,  14, 'ENABLED'),
-    ('P005', '菠菜',   1, '斤', '新鲜',    3.00,  4.50,   5, 'ENABLED'),
-    ('P006', '苹果',   2, '斤', '红富士',  4.50,  6.50,  30, 'ENABLED'),
-    ('P007', '香蕉',   2, '斤', '进口',    2.80,  4.20,   7, 'ENABLED'),
-    ('P008', '橙子',   2, '斤', '赣南',    3.50,  5.20,  14, 'ENABLED'),
-    ('P009', '葡萄',   2, '斤', '巨峰',    6.00,  9.00,   7, 'ENABLED'),
-    ('P010', '西瓜',   2, '斤', '无籽',    1.50,  2.50,  10, 'ENABLED'),
-    ('P011', '大米',   3, '千克','东北',   3.20,  4.80, 365, 'ENABLED'),
-    ('P012', '花生油', 3, '桶', '5L',     58.00, 79.00, 540, 'ENABLED');
+INSERT INTO products (product_code, name, category_id, unit, specification, status) VALUES
+    ('P001', '西红柿', 1, '斤', '新鲜',   'ENABLED'),
+    ('P002', '黄瓜',   1, '斤', '顶花',   'ENABLED'),
+    ('P003', '土豆',   1, '斤', '黄心',   'ENABLED'),
+    ('P004', '白菜',   1, '斤', '大棵',   'ENABLED'),
+    ('P005', '菠菜',   1, '斤', '新鲜',   'ENABLED'),
+    ('P006', '苹果',   2, '斤', '红富士', 'ENABLED'),
+    ('P007', '香蕉',   2, '斤', '进口',   'ENABLED'),
+    ('P008', '橙子',   2, '斤', '赣南',   'ENABLED'),
+    ('P009', '葡萄',   2, '斤', '巨峰',   'ENABLED'),
+    ('P010', '西瓜',   2, '斤', '无籽',   'ENABLED'),
+    ('P011', '大米',   3, '千克','东北',  'ENABLED'),
+    ('P012', '花生油', 3, '桶', '5L',    'ENABLED');
 
 -- 供应商
 INSERT INTO suppliers (supplier_code, name, contact, phone, address, status) VALUES

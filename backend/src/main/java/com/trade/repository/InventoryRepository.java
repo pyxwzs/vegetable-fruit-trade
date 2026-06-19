@@ -47,12 +47,10 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long>, Jpa
     @Query("SELECT COUNT(DISTINCT i.product.id) FROM Inventory i WHERE i.quantity > 0")
     long countDistinctProductsInStock();
 
-    /** 按仓库统计当前库存资产价值（数量 × 采购价） */
-    @Query("SELECT i.warehouse.id, i.warehouse.name, COALESCE(SUM(i.quantity * i.purchasePrice), 0) FROM Inventory i WHERE i.quantity > 0 GROUP BY i.warehouse.id, i.warehouse.name ORDER BY i.warehouse.id")
+    @Query("SELECT i.warehouse.id, i.warehouse.name, COALESCE(SUM(i.quantity), 0) FROM Inventory i WHERE i.quantity > 0 GROUP BY i.warehouse.id, i.warehouse.name ORDER BY i.warehouse.id")
     List<Object[]> sumAssetByWarehouse();
 
-    /** 全部仓库库存资产总价值 */
-    @Query("SELECT COALESCE(SUM(i.quantity * i.purchasePrice), 0) FROM Inventory i WHERE i.quantity > 0")
+    @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM Inventory i WHERE i.quantity > 0")
     Object sumTotalAsset();
 
     @Modifying

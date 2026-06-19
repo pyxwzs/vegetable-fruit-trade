@@ -2,7 +2,6 @@ package com.trade.controller;
 
 import com.trade.dto.ProductDTO;
 import com.trade.entity.Product;
-import com.trade.entity.ProductPriceHistory;
 import com.trade.service.ProductService;
 import com.trade.util.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,16 +20,6 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
-
-    @GetMapping("/lookup")
-    public ApiResponse<Product> lookupByCode(@RequestParam String code) {
-        return ApiResponse.success(productService.lookupByCode(code));
-    }
-
-    @GetMapping("/{id}/price-history")
-    public ApiResponse<List<ProductPriceHistory>> priceHistory(@PathVariable Long id) {
-        return ApiResponse.success(productService.getPriceHistory(id));
-    }
 
     @GetMapping
     public ApiResponse<Page<Product>> getProducts(

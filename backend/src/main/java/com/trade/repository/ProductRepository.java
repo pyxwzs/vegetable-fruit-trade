@@ -14,12 +14,8 @@ import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+
     Optional<Product> findByProductCode(String productCode);
-
-    Optional<Product> findByBarcode(String barcode);
-
-    @Query("SELECT p FROM Product p WHERE p.productCode = :code OR p.barcode = :code")
-    Optional<Product> findByProductCodeOrBarcode(@Param("code") String code);
 
     Page<Product> findByNameContaining(String name, Pageable pageable);
 
@@ -30,8 +26,4 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     List<Product> findAllEnabled();
 
     boolean existsByProductCode(String productCode);
-
-    boolean existsByBarcode(String barcode);
-
-    boolean existsByBarcodeAndIdNot(String barcode, Long id);
 }
