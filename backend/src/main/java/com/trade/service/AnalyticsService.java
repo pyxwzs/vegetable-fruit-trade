@@ -46,8 +46,7 @@ public class AnalyticsService {
         long pendingSales = salesOrderRepository.countByStatusScoped(SalesOrder.OrderStatus.PENDING, scope);
         int lowStock = inventoryService.getLowStockProducts().size();
         int expiring = inventoryService.getExpiringProducts().size();
-        int creditWarn = customerService.listCreditWarnings().size();
-        return new DailyReportDTO(d, realized, newSales, newPurchase, pendingPurchase, pendingSales, lowStock, expiring, creditWarn);
+        return new DailyReportDTO(d, realized, newSales, newPurchase, pendingPurchase, pendingSales, lowStock, expiring, 0);
     }
 
     public HomeSummaryDTO getHomeSummary() {
