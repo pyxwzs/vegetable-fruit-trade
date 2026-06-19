@@ -150,21 +150,16 @@ CREATE TABLE suppliers (
 
 -- ── 客户 ──────────────────────────────────────────────────────
 CREATE TABLE customers (
-    id                    BIGINT        PRIMARY KEY AUTO_INCREMENT,
-    customer_code         VARCHAR(50)   NOT NULL UNIQUE,
-    name                  VARCHAR(100)  NOT NULL,
-    contact               VARCHAR(50),
-    phone                 VARCHAR(20),
-    address               VARCHAR(200),
-    type                  ENUM('WHOLESALE','RETAIL','CHAIN','OTHER') DEFAULT 'RETAIL',
-    credit_level          ENUM('A','B','C','D') DEFAULT 'B',
-    credit_limit          DECIMAL(10,2) DEFAULT 0,
-    total_purchase_amount DECIMAL(10,2) DEFAULT 0,
-    purchase_count        INT           DEFAULT 0,
-    remark                TEXT,
-    status                ENUM('ACTIVE','INACTIVE','FROZEN') DEFAULT 'ACTIVE',
-    create_time           DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_time           DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id            BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    customer_code VARCHAR(50)  NOT NULL UNIQUE,
+    name          VARCHAR(100) NOT NULL,
+    contact       VARCHAR(50),
+    phone         VARCHAR(20),
+    address       VARCHAR(200),
+    remark        TEXT,
+    status        ENUM('ACTIVE','INACTIVE') DEFAULT 'ACTIVE',
+    create_time   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time   DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_customer_code (customer_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -295,11 +290,11 @@ INSERT INTO suppliers (supplier_code, name, contact, phone, address, status) VAL
     ('S003', '粮油直供商行',       '刘经理', '13800001003', '天津武清区',      'ACTIVE');
 
 -- 客户
-INSERT INTO customers (customer_code, name, contact, phone, address, type, credit_level, credit_limit, status) VALUES
-    ('C001', '好又多生鲜超市',   '张店长', '13900001001', '朝阳区建国路88号', 'WHOLESALE', 'A', 50000.00, 'ACTIVE'),
-    ('C002', '家乐福便民门店',   '李经理', '13900001002', '海淀区中关村',     'CHAIN',     'A', 80000.00, 'ACTIVE'),
-    ('C003', '社区生鲜便利店',   '赵老板', '13900001003', '西城区西四北大街', 'RETAIL',    'B',  8000.00, 'ACTIVE'),
-    ('C004', '便利连锁配送中心', '孙总监', '13900001004', '通州区梨园镇',     'CHAIN',     'B', 30000.00, 'ACTIVE');
+INSERT INTO customers (customer_code, name, contact, phone, address, status) VALUES
+    ('C001', '好又多生鲜超市',   '张店长', '13900001001', '朝阳区建国路88号', 'ACTIVE'),
+    ('C002', '家乐福便民门店',   '李经理', '13900001002', '海淀区中关村',     'ACTIVE'),
+    ('C003', '社区生鲜便利店',   '赵老板', '13900001003', '西城区西四北大街', 'ACTIVE'),
+    ('C004', '便利连锁配送中心', '孙总监', '13900001004', '通州区梨园镇',     'ACTIVE');
 
 -- 采购订单
 INSERT INTO purchase_orders
