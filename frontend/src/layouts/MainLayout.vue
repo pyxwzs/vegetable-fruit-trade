@@ -18,15 +18,29 @@
           <span>仪表盘</span>
         </el-menu-item>
 
-        <el-sub-menu index="data">
+        <el-sub-menu index="trade">
           <template #title>
-            <el-icon><DataLine /></el-icon>
-            <span>数据管理</span>
+            <el-icon><ShoppingCart /></el-icon>
+            <span>进销管理</span>
           </template>
-          <el-menu-item index="/data-management/products">商品管理</el-menu-item>
-          <el-menu-item index="/data-management/inventory">库存管理</el-menu-item>
           <el-menu-item index="/data-management/purchase">采购管理</el-menu-item>
           <el-menu-item index="/data-management/sales">销售管理</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="stock">
+          <template #title>
+            <el-icon><Box /></el-icon>
+            <span>商品库存</span>
+          </template>
+          <el-menu-item index="/data-management/products">商品管理</el-menu-item>
+          <el-menu-item index="/data-management/inventory">库存查看</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu index="partner">
+          <template #title>
+            <el-icon><UserFilled /></el-icon>
+            <span>往来管理</span>
+          </template>
           <el-menu-item index="/data-management/suppliers">供应商管理</el-menu-item>
           <el-menu-item index="/data-management/customers">客户管理</el-menu-item>
         </el-sub-menu>
@@ -90,6 +104,9 @@ import { ElMessageBox } from 'element-plus'
 import {
   Odometer,
   DataLine,
+  ShoppingCart,
+  Box,
+  UserFilled,
   PieChart,
   Calendar,
   Expand,
