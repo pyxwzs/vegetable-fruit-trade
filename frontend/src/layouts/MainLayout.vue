@@ -103,7 +103,6 @@ import { useStore } from 'vuex'
 import { ElMessageBox } from 'element-plus'
 import {
   Odometer,
-  DataLine,
   ShoppingCart,
   Box,
   UserFilled,

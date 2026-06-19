@@ -164,8 +164,6 @@ const loadSales = async () => {
   } catch { ElMessage.error('查询失败') } finally { salesLoading.value = false }
 }
 
-const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
-
 const exportToExcel = (report, type) => {
   if (!report) { ElMessage.warning('请先查询数据'); return }
   const label = type === 'purchase' ? '采购' : '销售'
