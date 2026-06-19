@@ -1,6 +1,7 @@
 package com.trade.controller;
 
 import com.trade.dto.*;
+import com.trade.dto.MonthlyReportDTO;
 import com.trade.service.AnalyticsService;
 import com.trade.util.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -76,5 +77,21 @@ public class AnalyticsController {
             @RequestParam(defaultValue = "month") String range,
             @RequestParam(defaultValue = "20") int limit) {
         return ApiResponse.success(analyticsService.getCustomerRanking(range, limit));
+    }
+
+    @GetMapping("/monthly-purchase")
+    public ApiResponse<MonthlyReportDTO> monthlyPurchase(
+            @RequestParam(required = false) Long supplierId,
+            @RequestParam(defaultValue = "0") int year) {
+        int y = year > 0 ? year : java.time.LocalDate.now().getYear();
+        return ApiResponse.success(analyticsService.getMonthlyPurchaseBySupplier(supplierId, y));
+    }
+
+    @GetMapping("/monthly-sales")
+    public ApiResponse<MonthlyReportDTO> monthlySales(
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(defaultValue = "0") int year) {
+        int y = year > 0 ? year : java.time.LocalDate.now().getYear();
+        return ApiResponse.success(analyticsService.getMonthlySalesByCustomer(customerId, y));
     }
 }

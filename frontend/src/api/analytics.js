@@ -61,3 +61,11 @@ export function getCustomerRanking(range, limit = 20) {
     params: { range, limit }
   })
 }
+
+export function getMonthlyPurchase(params) {
+  return request({ url: '/analytics/monthly-purchase', method: 'get', params })
+}
+
+export function getMonthlySales(params) {
+  return request({ url: '/analytics/monthly-sales', method: 'get', params })
+}

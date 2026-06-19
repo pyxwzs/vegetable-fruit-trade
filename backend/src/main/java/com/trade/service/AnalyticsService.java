@@ -4,7 +4,9 @@ import com.trade.dto.*;
 import com.trade.entity.Customer;
 import com.trade.entity.PurchaseOrder;
 import com.trade.entity.SalesOrder;
+import com.trade.entity.Supplier;
 import com.trade.repository.*;
+import com.trade.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,7 @@ public class AnalyticsService {
     private final SalesOrderItemRepository salesOrderItemRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final CustomerRepository customerRepository;
+    private final SupplierRepository supplierRepository;
     private final InventoryRepository inventoryRepository;
     private final InventoryService inventoryService;
     private final CustomerService customerService;
@@ -177,6 +180,60 @@ public class AnalyticsService {
             ));
         }
         return out;
+    }
+
+    public MonthlyReportDTO getMonthlyPurchaseBySupplier(Long supplierId, int year) {
+        List<Object[]> rows = supplierId != null
+                ? purchaseOrderRepository.monthlyStatsBySupplier(supplierId, year)
+                : purchaseOrderRepository.monthlyStatsAllSuppliers(year);
+        String name = "全部农户";
+        if (supplierId != null) {
+            name = supplierRepository.findById(supplierId).map(Supplier::getName).orElse("未知");
+        }
+        return buildMonthlyReport(supplierId, name, year, rows);
+    }
+
+    public MonthlyReportDTO getMonthlySalesByCustomer(Long customerId, int year) {
+        List<Object[]> rows = customerId != null
+                ? salesOrderRepository.monthlyStatsByCustomer(customerId, year)
+                : salesOrderRepository.monthlyStatsAllCustomers(year);
+        String name = "全部客户";
+        if (customerId != null) {
+            name = customerRepository.findById(customerId).map(Customer::getName).orElse("未知");
+        }
+        return buildMonthlyReport(customerId, name, year, rows);
+    }
+
+    private MonthlyReportDTO buildMonthlyReport(Long entityId, String entityName, int year, List<Object[]> rawRows) {
+        Map<Integer, Object[]> map = new HashMap<>();
+        if (rawRows != null) {
+            for (Object[] r : rawRows) {
+                int m = ((Number) r[0]).intValue();
+                map.put(m, r);
+            }
+        }
+        List<MonthlyStatRowDTO> rows = new ArrayList<>();
+        BigDecimal yearTotal = BigDecimal.ZERO;
+        BigDecimal yearSettled = BigDecimal.ZERO;
+        for (int m = 1; m <= 12; m++) {
+            Object[] r = map.get(m);
+            long cnt = r != null ? ((Number) r[1]).longValue() : 0L;
+            BigDecimal total = r != null ? toBigDecimal(r[2]) : BigDecimal.ZERO;
+            BigDecimal settled = r != null ? toBigDecimal(r[3]) : BigDecimal.ZERO;
+            BigDecimal pending = total.subtract(settled).max(BigDecimal.ZERO);
+            rows.add(new MonthlyStatRowDTO(m, cnt, total, settled, pending));
+            yearTotal = yearTotal.add(total);
+            yearSettled = yearSettled.add(settled);
+        }
+        MonthlyReportDTO dto = new MonthlyReportDTO();
+        dto.setEntityId(entityId);
+        dto.setEntityName(entityName);
+        dto.setYear(year);
+        dto.setRows(rows);
+        dto.setYearTotalAmount(yearTotal);
+        dto.setYearSettledAmount(yearSettled);
+        dto.setYearPendingAmount(yearTotal.subtract(yearSettled).max(BigDecimal.ZERO));
+        return dto;
     }
 
     private static BigDecimal grossProfitFromRow(Object[] rc) {

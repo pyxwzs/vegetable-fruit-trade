@@ -35,6 +35,11 @@
           <el-icon><PieChart /></el-icon>
           <span>经营分析</span>
         </el-menu-item>
+
+        <el-menu-item index="/monthly-report">
+          <el-icon><Calendar /></el-icon>
+          <span>月度报表</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 
@@ -86,6 +91,7 @@ import {
   Odometer,
   DataLine,
   PieChart,
+  Calendar,
   Expand,
   Fold,
   ArrowDown

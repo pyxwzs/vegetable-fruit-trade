@@ -55,4 +55,14 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, J
 
     @Query("SELECT COALESCE(SUM(o.totalAmount - COALESCE(o.receivedAmount, 0)), 0) FROM SalesOrder o WHERE o.customer.id = :cid AND o.status <> 'CANCELLED' AND o.paymentStatus <> 'PAID'")
     BigDecimal sumUnpaidExposure(@Param("cid") Long customerId);
+
+    @Query("SELECT MONTH(o.orderDate), COUNT(o), COALESCE(SUM(o.totalAmount),0), COALESCE(SUM(o.receivedAmount),0) " +
+           "FROM SalesOrder o WHERE o.customer.id = :customerId AND YEAR(o.orderDate) = :year AND o.status <> 'CANCELLED' " +
+           "GROUP BY MONTH(o.orderDate) ORDER BY MONTH(o.orderDate)")
+    List<Object[]> monthlyStatsByCustomer(@Param("customerId") Long customerId, @Param("year") int year);
+
+    @Query("SELECT MONTH(o.orderDate), COUNT(o), COALESCE(SUM(o.totalAmount),0), COALESCE(SUM(o.receivedAmount),0) " +
+           "FROM SalesOrder o WHERE YEAR(o.orderDate) = :year AND o.status <> 'CANCELLED' " +
+           "GROUP BY MONTH(o.orderDate) ORDER BY MONTH(o.orderDate)")
+    List<Object[]> monthlyStatsAllCustomers(@Param("year") int year);
 }

@@ -39,4 +39,14 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
     List<Object[]> sumFinanceByMonth(@Param("start") LocalDate start);
 
     Optional<PurchaseOrder> findByOrderNo(String orderNo);
+
+    @Query("SELECT MONTH(p.orderDate), COUNT(p), COALESCE(SUM(p.totalAmount),0), COALESCE(SUM(p.paidAmount),0) " +
+           "FROM PurchaseOrder p WHERE p.supplier.id = :supplierId AND YEAR(p.orderDate) = :year AND p.status <> 'CANCELLED' " +
+           "GROUP BY MONTH(p.orderDate) ORDER BY MONTH(p.orderDate)")
+    List<Object[]> monthlyStatsBySupplier(@Param("supplierId") Long supplierId, @Param("year") int year);
+
+    @Query("SELECT MONTH(p.orderDate), COUNT(p), COALESCE(SUM(p.totalAmount),0), COALESCE(SUM(p.paidAmount),0) " +
+           "FROM PurchaseOrder p WHERE YEAR(p.orderDate) = :year AND p.status <> 'CANCELLED' " +
+           "GROUP BY MONTH(p.orderDate) ORDER BY MONTH(p.orderDate)")
+    List<Object[]> monthlyStatsAllSuppliers(@Param("year") int year);
 }

@@ -70,6 +70,12 @@ const routes = [
                 meta: { title: '经营分析' }
             },
             {
+                path: 'monthly-report',
+                name: 'MonthlyReport',
+                component: () => import('../views/analysis/MonthlyReport.vue'),
+                meta: { title: '月度报表' }
+            },
+            {
                 path: 'profile',
                 name: 'Profile',
                 component: () => import('../views/Profile.vue'),
