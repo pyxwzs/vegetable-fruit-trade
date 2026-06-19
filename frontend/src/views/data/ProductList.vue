@@ -4,18 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>商品管理</span>
-          <div class="header-actions">
-            <el-button type="primary" @click="handleAdd">新增商品</el-button>
-            <el-button @click="downloadTemplate">下载导入模板</el-button>
-            <el-upload
-                :show-file-list="false"
-                accept=".xlsx,.xls"
-                :http-request="handleImportRequest"
-            >
-              <el-button type="success">批量导入</el-button>
-            </el-upload>
-            <el-button @click="handleExport">导出</el-button>
-          </div>
+          <el-button type="primary" @click="handleAdd">新增商品</el-button>
         </div>
       </template>
 
@@ -200,9 +189,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  lookupProduct,
-  downloadProductImportTemplate,
-  importProducts
+  lookupProduct
 } from '@/api/product'
 import { listCategories } from '@/api/category'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
@@ -597,41 +584,6 @@ const beforeAvatarUpload = (file) => {
   return isImage && isLt2M
 }
 
-const downloadTemplate = async () => {
-  try {
-    const blob = await downloadProductImportTemplate()
-    const b = blob instanceof Blob ? blob : new Blob([blob])
-    const url = window.URL.createObjectURL(b)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = '商品导入模板.xlsx'
-    a.click()
-    window.URL.revokeObjectURL(url)
-    ElMessage.success('模板已下载')
-  } catch {
-    ElMessage.error('下载失败')
-  }
-}
-
-const handleImportRequest = async (options) => {
-  try {
-    const res = await importProducts(options.file)
-    const d = res.data
-    ElMessage.success(`导入完成：成功 ${d.successCount} 条，失败 ${d.failCount} 条`)
-    if (d.errors?.length) {
-      ElMessageBox.alert(d.errors.join('\n'), '失败明细（前若干条）', { type: 'warning' })
-    }
-    loadData()
-    options.onSuccess?.()
-  } catch {
-    options.onError?.(new Error('fail'))
-  }
-}
-
-const handleExport = () => {
-  ElMessage.info('导出功能开发中')
-}
-
 onMounted(() => {
   loadCategories()
   loadData()
@@ -650,13 +602,6 @@ onUnmounted(() => {
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-  }
-
-  .header-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
   }
 
   .search-bar {
