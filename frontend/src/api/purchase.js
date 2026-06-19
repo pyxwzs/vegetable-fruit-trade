@@ -19,3 +19,7 @@ export function completePurchaseOrder(id) {
 export function cancelPurchaseOrder(id) {
   return request({ url: `/purchase/${id}/cancel`, method: 'post' })
 }
+
+export function payPurchaseOrder(id, data) {
+  return request({ url: `/purchase/${id}/pay`, method: 'post', data })
+}

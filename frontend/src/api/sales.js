@@ -19,3 +19,7 @@ export function completeSalesOrder(id) {
 export function cancelSalesOrder(id) {
   return request({ url: `/sales/${id}/cancel`, method: 'post' })
 }
+
+export function collectSalesOrder(id, data) {
+  return request({ url: `/sales/${id}/collect`, method: 'post', data })
+}

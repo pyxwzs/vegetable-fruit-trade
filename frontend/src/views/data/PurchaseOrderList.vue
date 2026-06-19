@@ -16,7 +16,7 @@
             clearable
             @keyup.enter="handleSearch"
         />
-        <el-select v-model="status" placeholder="状态" clearable style="width: 140px">
+        <el-select v-model="status" placeholder="货物状态" clearable style="width: 130px">
           <el-option label="待处理" value="PENDING" />
           <el-option label="已完成" value="COMPLETED" />
           <el-option label="已取消" value="CANCELLED" />
@@ -27,23 +27,41 @@
 
       <el-table :data="orders" v-loading="loading" border style="width: 100%">
         <el-table-column prop="orderNo" label="订单号" width="170" />
-        <el-table-column prop="supplier.name" label="供应商" min-width="140" />
+        <el-table-column prop="supplier.name" label="供应商" min-width="130" />
         <el-table-column prop="orderDate" label="下单日期" width="110">
           <template #default="{ row }">{{ formatDate(row.orderDate) }}</template>
         </el-table-column>
         <el-table-column prop="totalAmount" label="总金额" width="110">
           <template #default="{ row }">¥{{ Number(row.totalAmount).toFixed(2) }}</template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="paidAmount" label="已付" width="100">
+          <template #default="{ row }">¥{{ Number(row.paidAmount || 0).toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column label="付款状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="payTag(row.paymentStatus)">{{ payText(row.paymentStatus) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="货物状态" width="100">
           <template #default="{ row }">
             <el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="260" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="openDetail(row)">详情</el-button>
-            <el-button v-if="row.status === 'PENDING'" type="success" link @click="doComplete(row)">完成</el-button>
-            <el-button v-if="row.status === 'PENDING'" type="danger" link @click="doCancel(row)">取消</el-button>
+            <el-button
+                v-if="row.status === 'PENDING'"
+                type="success" link @click="doComplete(row)"
+            >完成入库</el-button>
+            <el-button
+                v-if="row.status !== 'CANCELLED' && row.paymentStatus !== 'PAID'"
+                type="warning" link @click="openPay(row)"
+            >登记付款</el-button>
+            <el-button
+                v-if="row.status === 'PENDING'"
+                type="danger" link @click="doCancel(row)"
+            >取消</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -110,8 +128,10 @@
       <div v-if="detailOrder" class="detail-body">
         <p><strong>订单号：</strong>{{ detailOrder.orderNo }}</p>
         <p><strong>供应商：</strong>{{ detailOrder.supplier?.name }}</p>
-        <p><strong>状态：</strong>{{ statusText(detailOrder.status) }}</p>
+        <p><strong>货物状态：</strong>{{ statusText(detailOrder.status) }}</p>
         <p><strong>总金额：</strong>¥{{ Number(detailOrder.totalAmount).toFixed(2) }}</p>
+        <p><strong>已付金额：</strong>¥{{ Number(detailOrder.paidAmount || 0).toFixed(2) }}</p>
+        <p><strong>付款状态：</strong>{{ payText(detailOrder.paymentStatus) }}</p>
         <p><strong>备注：</strong>{{ detailOrder.remark || '-' }}</p>
         <el-table :data="detailOrder.items" border size="small" class="detail-table">
           <el-table-column prop="product.name" label="商品" />
@@ -128,6 +148,31 @@
         <el-button @click="detailVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 登记付款 -->
+    <el-dialog v-model="payVisible" title="登记付款" width="400px" destroy-on-close @closed="payRow = null">
+      <div v-if="payRow" class="pay-hint">
+        <p>订单：{{ payRow.orderNo }}</p>
+        <p>总金额：¥{{ Number(payRow.totalAmount).toFixed(2) }}</p>
+        <p>已付：¥{{ Number(payRow.paidAmount || 0).toFixed(2) }}</p>
+        <p>待付：¥{{ unpaid(payRow).toFixed(2) }}</p>
+      </div>
+      <el-form label-width="90px" style="margin-top: 16px">
+        <el-form-item label="本次付款">
+          <el-input-number
+              v-model="payAmount"
+              :min="0.01"
+              :precision="2"
+              :max="payRow ? unpaid(payRow) : undefined"
+              style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="payVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitPay">确认</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -136,7 +181,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getPurchaseOrders, getPurchaseOrder,
-  createPurchaseOrder, completePurchaseOrder, cancelPurchaseOrder
+  createPurchaseOrder, completePurchaseOrder, cancelPurchaseOrder, payPurchaseOrder
 } from '@/api/purchase'
 import { getActiveSuppliers } from '@/api/supplier'
 import { getAllEnabledProducts } from '@/api/product'
@@ -158,6 +203,12 @@ const productOptions = ref([])
 
 const detailVisible = ref(false)
 const detailOrder = ref(null)
+
+const payVisible = ref(false)
+const payRow = ref(null)
+const payAmount = ref(0)
+
+const unpaid = (row) => Math.max(0, Number(((Number(row.totalAmount) - Number(row.paidAmount || 0)).toFixed(2))))
 
 const loadData = async () => {
   loading.value = true
@@ -217,8 +268,8 @@ const openDetail = async (row) => {
 }
 
 const doComplete = (row) => {
-  ElMessageBox.confirm(`确认完成采购单「${row.orderNo}」？将自动增加库存。`, '完成采购', { type: 'warning' })
-    .then(async () => { await completePurchaseOrder(row.id); ElMessage.success('已完成'); loadData() })
+  ElMessageBox.confirm(`确认完成采购「${row.orderNo}」？将自动增加库存。`, '完成入库', { type: 'warning' })
+    .then(async () => { await completePurchaseOrder(row.id); ElMessage.success('货物已入库'); loadData() })
     .catch(() => {})
 }
 
@@ -228,8 +279,28 @@ const doCancel = (row) => {
     .catch(() => {})
 }
 
+const openPay = (row) => {
+  const left = unpaid(row)
+  if (left <= 0) { ElMessage.info('该单已付清'); return }
+  payRow.value = row
+  payAmount.value = left
+  payVisible.value = true
+}
+
+const submitPay = async () => {
+  if (!payRow.value || payAmount.value <= 0) { ElMessage.warning('请输入有效金额'); return }
+  try {
+    await payPurchaseOrder(payRow.value.id, { amount: payAmount.value })
+    ElMessage.success('付款已登记')
+    payVisible.value = false
+    loadData()
+  } catch { /* */ }
+}
+
+const payTag = (s) => ({ UNPAID: 'danger', PARTIAL: 'warning', PAID: 'success' }[s] || 'info')
+const payText = (s) => ({ UNPAID: '未付款', PARTIAL: '部分付款', PAID: '已付清' }[s] || s)
 const statusType = (s) => ({ PENDING: 'info', COMPLETED: 'success', CANCELLED: 'danger' }[s] || 'info')
-const statusText = (s) => ({ PENDING: '待处理', COMPLETED: '已完成', CANCELLED: '已取消' }[s] || s)
+const statusText = (s) => ({ PENDING: '待入库', COMPLETED: '已入库', CANCELLED: '已取消' }[s] || s)
 
 onMounted(() => { loadOptions().then(() => loadData()) })
 </script>
@@ -242,5 +313,6 @@ onMounted(() => { loadOptions().then(() => loadData()) })
   .items-table { margin-top: 8px; width: 100%; }
   .detail-body p { margin: 6px 0; }
   .detail-table { margin-top: 12px; }
+  .pay-hint p { margin: 4px 0; font-size: 13px; color: var(--el-text-color-regular); }
 }
 </style>

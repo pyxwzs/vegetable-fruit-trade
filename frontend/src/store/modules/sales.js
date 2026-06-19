@@ -1,4 +1,4 @@
-import { getSalesOrders, getSalesOrder, createSalesOrder, completeSalesOrder, cancelSalesOrder } from '@/api/sales'
+import { getSalesOrders, getSalesOrder, createSalesOrder, completeSalesOrder, cancelSalesOrder, collectSalesOrder } from '@/api/sales'
 
 export default {
     namespaced: true,
@@ -38,6 +38,11 @@ export default {
 
         async cancelOrder(_, id) {
             const response = await cancelSalesOrder(id)
+            return response.data
+        },
+
+        async collectOrder(_, { id, data }) {
+            const response = await collectSalesOrder(id, data)
             return response.data
         }
     }
