@@ -48,16 +48,6 @@
         <el-table-column prop="category.name" label="分类" width="100" />
         <el-table-column prop="unit" label="单位" width="70" />
         <el-table-column prop="specification" label="规格" width="100" />
-        <el-table-column prop="purchasePrice" label="采购价" width="100">
-          <template #default="{ row }">
-            ¥{{ row.purchasePrice?.toFixed(2) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="salePrice" label="销售价" width="100">
-          <template #default="{ row }">
-            ¥{{ row.salePrice?.toFixed(2) }}
-          </template>
-        </el-table-column>
         <el-table-column prop="status" label="状态" width="90">
           <template #default="{ row }">
             <el-tag :type="row.status === 'ENABLED' ? 'success' : 'info'">
@@ -68,7 +58,6 @@
         <el-table-column label="操作" width="320" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="info" link @click="openPriceHistory(row)">价格历史</el-button>
             <el-button
                 v-if="row.barcode"
                 type="success"
@@ -152,29 +141,6 @@
           <el-input v-model="form.specification" placeholder="请输入规格" />
         </el-form-item>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="采购价" prop="purchasePrice">
-              <el-input v-model="form.purchasePrice" placeholder="采购价" type="number">
-                <template #prefix>¥</template>
-              </el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="销售价" prop="salePrice">
-              <el-input v-model="form.salePrice" placeholder="销售价" type="number">
-                <template #prefix>¥</template>
-              </el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-form-item label="保质期" prop="shelfLife">
-          <el-input v-model="form.shelfLife" placeholder="保质期（天）" type="number">
-            <template #append>天</template>
-          </el-input>
-        </el-form-item>
-
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio label="ENABLED">启用</el-radio>
@@ -207,34 +173,6 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="historyVisible" title="价格变动历史" width="720px" destroy-on-close>
-      <el-table :data="priceHistoryRows" v-loading="historyLoading" border max-height="400">
-        <el-table-column prop="createdAt" label="时间" width="170">
-          <template #default="{ row }">
-            {{ formatDateTime(row.createdAt) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="变更前进价" width="110">
-          <template #default="{ row }">¥{{ row.prevPurchasePrice != null ? Number(row.prevPurchasePrice).toFixed(2) : '-' }}</template>
-        </el-table-column>
-        <el-table-column label="变更前售价" width="110">
-          <template #default="{ row }">¥{{ row.prevSalePrice != null ? Number(row.prevSalePrice).toFixed(2) : '-' }}</template>
-        </el-table-column>
-        <el-table-column label="变更后进价" width="110">
-          <template #default="{ row }">¥{{ row.newPurchasePrice != null ? Number(row.newPurchasePrice).toFixed(2) : '-' }}</template>
-        </el-table-column>
-        <el-table-column label="变更后售价" width="110">
-          <template #default="{ row }">¥{{ row.newSalePrice != null ? Number(row.newSalePrice).toFixed(2) : '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="source" label="来源" width="90">
-          <template #default="{ row }">
-            {{ row.source === 'IMPORT' ? '导入' : '手工' }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="operatorUsername" label="操作人" width="100" show-overflow-tooltip />
-      </el-table>
-    </el-dialog>
-
     <el-dialog
         v-model="cameraScanVisible"
         title="摄像头扫码"
@@ -264,11 +202,9 @@ import {
   deleteProduct,
   lookupProduct,
   downloadProductImportTemplate,
-  importProducts,
-  getProductPriceHistory
+  importProducts
 } from '@/api/product'
 import { listCategories } from '@/api/category'
-import { formatDateTime } from '@/utils/date'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 
 const CAMERA_SCAN_ELEMENT_ID = 'product-scan-camera-region'
@@ -299,9 +235,6 @@ const form = reactive({
   categoryId: null,
   unit: '',
   specification: '',
-  purchasePrice: null,
-  salePrice: null,
-  shelfLife: null,
   imageUrl: '',
   description: '',
   status: 'ENABLED'
@@ -318,10 +251,6 @@ const rules = {
   ],
   unit: [{ required: true, message: '请输入单位', trigger: 'blur' }]
 }
-
-const historyVisible = ref(false)
-const historyLoading = ref(false)
-const priceHistoryRows = ref([])
 
 const barcodeSvgRef = ref(null)
 
@@ -574,19 +503,9 @@ const handleScanLookup = async () => {
 const handleAdd = () => {
   dialogTitle.value = '新增商品'
   Object.assign(form, {
-    id: null,
-    productCode: '',
-    barcode: '',
-    name: '',
-    categoryId: null,
-    unit: '',
-    specification: '',
-    purchasePrice: null,
-    salePrice: null,
-    shelfLife: null,
-    imageUrl: '',
-    description: '',
-    status: 'ENABLED'
+    id: null, productCode: '', barcode: '', name: '',
+    categoryId: null, unit: '', specification: '',
+    imageUrl: '', description: '', status: 'ENABLED'
   })
   dialogVisible.value = true
 }
@@ -594,35 +513,13 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   dialogTitle.value = '编辑商品'
   Object.assign(form, {
-    id: row.id,
-    productCode: row.productCode,
-    barcode: row.barcode || '',
-    name: row.name,
-    categoryId: row.category?.id ?? null,
-    unit: row.unit,
-    specification: row.specification,
-    purchasePrice: row.purchasePrice,
-    salePrice: row.salePrice,
-    shelfLife: row.shelfLife,
-    imageUrl: row.imageUrl,
-    description: row.description,
+    id: row.id, productCode: row.productCode, barcode: row.barcode || '',
+    name: row.name, categoryId: row.category?.id ?? null,
+    unit: row.unit, specification: row.specification,
+    imageUrl: row.imageUrl, description: row.description,
     status: row.status || 'ENABLED'
   })
   dialogVisible.value = true
-}
-
-const openPriceHistory = async (row) => {
-  historyVisible.value = true
-  priceHistoryRows.value = []
-  historyLoading.value = true
-  try {
-    const res = await getProductPriceHistory(row.id)
-    priceHistoryRows.value = res.data || []
-  } catch {
-    priceHistoryRows.value = []
-  } finally {
-    historyLoading.value = false
-  }
 }
 
 const handleDelete = (row) => {
@@ -658,15 +555,6 @@ const submitForm = async () => {
           categoryId: form.categoryId,
           unit: form.unit,
           specification: form.specification,
-          purchasePrice: form.purchasePrice != null && form.purchasePrice !== ''
-            ? Number(form.purchasePrice)
-            : null,
-          salePrice: form.salePrice != null && form.salePrice !== ''
-            ? Number(form.salePrice)
-            : null,
-          shelfLife: form.shelfLife != null && form.shelfLife !== ''
-            ? parseInt(form.shelfLife, 10)
-            : null,
           imageUrl: form.imageUrl,
           description: form.description,
           status: form.status
