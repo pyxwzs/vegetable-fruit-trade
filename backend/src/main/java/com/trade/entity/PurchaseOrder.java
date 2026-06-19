@@ -29,7 +29,7 @@ public class PurchaseOrder {
 
     @ManyToOne
     @JoinColumn(name = "purchaser_id")
-    @JsonIgnoreProperties({"roles", "password", "mfaLoginEnabled", "loginAlertEmailEnabled"})
+    @JsonIgnoreProperties({"password"})
     private User purchaser; // 采购员
 
     private LocalDate orderDate; // 下单日期

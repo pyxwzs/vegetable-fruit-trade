@@ -70,7 +70,7 @@ public class ReturnFinanceRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submit_user_id")
-    @JsonIgnoreProperties({"roles", "password", "mfaLoginEnabled", "loginAlertEmailEnabled"})
+    @JsonIgnoreProperties({"password"})
     private User submitUser;
 
     /** 冗余存储提交人用户名，用于按提交人快速过滤 */
@@ -85,7 +85,7 @@ public class ReturnFinanceRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wh_approve_user_id")
-    @JsonIgnoreProperties({"roles", "password", "mfaLoginEnabled", "loginAlertEmailEnabled"})
+    @JsonIgnoreProperties({"password"})
     private User whApproveUser;
 
     @Column(name = "wh_approved_at")
@@ -102,7 +102,7 @@ public class ReturnFinanceRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approve_user_id")
-    @JsonIgnoreProperties({"roles", "password", "mfaLoginEnabled", "loginAlertEmailEnabled"})
+    @JsonIgnoreProperties({"password"})
     private User finApproveUser;
 
     @Column(name = "approved_at")

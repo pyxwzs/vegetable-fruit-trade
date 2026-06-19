@@ -29,7 +29,7 @@ public class SalesOrder {
 
     @ManyToOne
     @JoinColumn(name = "salesman_id")
-    @JsonIgnoreProperties({"roles", "password", "mfaLoginEnabled", "loginAlertEmailEnabled"})
+    @JsonIgnoreProperties({"password"})
     private User salesman; // 销售员
 
     private LocalDate orderDate;
