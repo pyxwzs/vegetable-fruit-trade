@@ -39,7 +39,5 @@ public class Category {
 
     private Integer sortOrder;
 
-    private String icon;
-
     private String description;
 }
