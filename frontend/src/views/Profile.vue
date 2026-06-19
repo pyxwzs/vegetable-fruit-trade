@@ -2,37 +2,41 @@
   <div class="profile-page">
     <el-card shadow="never" class="card">
       <template #header>
-        <span>个人资料 · 安全设置</span>
+        <span>个人资料</span>
       </template>
 
-      <el-form label-width="200px" class="form">
+      <el-form ref="formRef" :model="form" label-width="120px" class="form">
         <el-form-item label="用户名">
           <span>{{ userInfo?.username }}</span>
         </el-form-item>
-        <el-form-item label="邮箱">
-          <span>{{ userInfo?.email || '未绑定' }}</span>
+
+        <el-form-item label="姓名">
+          <el-input v-model="form.realName" placeholder="请输入姓名" />
         </el-form-item>
 
-        <el-divider content-position="left">登录安全</el-divider>
-
-        <el-form-item label="登录二次验证（邮箱验证码）">
-          <el-switch
-            v-model="form.mfaLoginEnabled"
-            :disabled="!mfaFeatureEnabled || saving"
-          />
-          <span class="tip">
-            <template v-if="!mfaFeatureEnabled">系统未开放此功能，无法开启。</template>
-            <template v-else>开启后，在账号与系统均允许时使用邮箱验证码第二步登录。</template>
-          </span>
-        </el-form-item>
-
-        <el-form-item label="登录提醒邮件">
-          <el-switch v-model="form.loginAlertEmailEnabled" :disabled="saving" />
-          <span class="tip">每次登录成功时向绑定邮箱发送提醒（含大致时间与 IP）。</span>
+        <el-form-item label="手机号">
+          <el-input v-model="form.phone" placeholder="请输入手机号" />
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+          <el-button type="primary" :loading="saving" @click="handleSave">保存资料</el-button>
+        </el-form-item>
+      </el-form>
+
+      <el-divider content-position="left">修改密码</el-divider>
+
+      <el-form ref="pwdFormRef" :model="pwdForm" :rules="pwdRules" label-width="120px" class="form">
+        <el-form-item label="原密码" prop="oldPassword">
+          <el-input v-model="pwdForm.oldPassword" type="password" show-password placeholder="请输入原密码" />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input v-model="pwdForm.newPassword" type="password" show-password placeholder="请输入新密码（6-20位）" />
+        </el-form-item>
+        <el-form-item label="确认新密码" prop="confirmPassword">
+          <el-input v-model="pwdForm.confirmPassword" type="password" show-password placeholder="请再次输入新密码" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="changingPwd" @click="handleChangePassword">修改密码</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -40,62 +44,87 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
-import { getAuthConfig, updateMySecurity } from '@/api/user'
+import { updateMe, changePassword } from '@/api/user'
 
 const store = useStore()
+const formRef = ref(null)
+const pwdFormRef = ref(null)
 const saving = ref(false)
-const mfaFeatureEnabled = ref(false)
+const changingPwd = ref(false)
 
 const userInfo = computed(() => store.state.user.userInfo)
 
-const form = reactive({
-  mfaLoginEnabled: false,
-  loginAlertEmailEnabled: true
-})
+const form = reactive({ realName: '', phone: '' })
 
-function syncFormFromStore() {
-  const u = userInfo.value
-  if (!u) return
-  form.mfaLoginEnabled = !!u.mfaLoginEnabled
-  form.loginAlertEmailEnabled = u.loginAlertEmailEnabled !== false
+watch(userInfo, (u) => {
+  if (u) {
+    form.realName = u.realName || ''
+    form.phone = u.phone || ''
+  }
+}, { immediate: true })
+
+const pwdForm = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
+
+const pwdRules = {
+  oldPassword: [{ required: true, message: '请输入原密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, max: 20, message: '密码长度6-20位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认新密码', trigger: 'blur' },
+    {
+      validator: (_, value, cb) => {
+        if (value !== pwdForm.newPassword) cb(new Error('两次密码不一致'))
+        else cb()
+      },
+      trigger: 'blur'
+    }
+  ]
 }
-
-watch(userInfo, syncFormFromStore, { immediate: true })
 
 onMounted(async () => {
   if (!userInfo.value) {
-    try {
-      await store.dispatch('user/getUserInfo')
-    } catch {
-      /* 路由守卫应已拦截未登录 */
-    }
-  }
-  syncFormFromStore()
-  try {
-    const res = await getAuthConfig()
-    mfaFeatureEnabled.value = !!res.data?.mfaFeatureEnabled
-  } catch {
-    mfaFeatureEnabled.value = false
+    await store.dispatch('user/getUserInfo')
   }
 })
 
 const handleSave = async () => {
   saving.value = true
   try {
-    const res = await updateMySecurity({
-      mfaLoginEnabled: form.mfaLoginEnabled,
-      loginAlertEmailEnabled: form.loginAlertEmailEnabled
-    })
+    const res = await updateMe({ realName: form.realName, phone: form.phone })
     store.commit('user/SET_USER_INFO', res.data)
-    ElMessage.success('已保存')
+    ElMessage.success('资料已保存')
   } catch (error) {
-    const msg = error.response?.data?.message || error.message || '保存失败'
-    ElMessage.error(msg)
+    ElMessage.error(error.response?.data?.message || '保存失败')
   } finally {
     saving.value = false
+  }
+}
+
+const handleChangePassword = async () => {
+  if (!pwdFormRef.value) return
+  try {
+    await pwdFormRef.value.validate()
+  } catch {
+    return
+  }
+  changingPwd.value = true
+  try {
+    await changePassword({
+      oldPassword: pwdForm.oldPassword,
+      newPassword: pwdForm.newPassword,
+      confirmPassword: pwdForm.confirmPassword
+    })
+    ElMessage.success('密码已修改，请重新登录')
+    store.dispatch('user/logout')
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '修改失败')
+  } finally {
+    changingPwd.value = false
   }
 }
 </script>
@@ -105,14 +134,6 @@ const handleSave = async () => {
   padding: 16px;
 }
 .card {
-  max-width: 720px;
-}
-.form {
-  .tip {
-    margin-left: 12px;
-    font-size: 12px;
-    color: #909399;
-    line-height: 1.5;
-  }
+  max-width: 600px;
 }
 </style>

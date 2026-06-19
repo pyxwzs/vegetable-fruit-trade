@@ -37,7 +37,6 @@ public class InventoryService {
     private final WarehouseRepository warehouseRepository;
     private final InventoryStocktakeLogRepository stocktakeLogRepository;
     private final InventoryTransferLogRepository transferLogRepository;
-    private final AlertService alertService;
 
     private static String normalizeBatch(String batchNo) {
         if (batchNo == null) {
@@ -300,19 +299,11 @@ public class InventoryService {
         }
     }
 
-    @Transactional
     public void checkAndAlertExpiringProducts() {
-        List<Inventory> expiringProducts = getExpiringProducts();
-        for (Inventory inventory : expiringProducts) {
-            alertService.sendExpiringAlert(inventory);
-        }
+        // 预警功能已简化，可从仪表盘查看临期商品
     }
 
-    @Transactional
     public void checkAndAlertLowStock() {
-        List<Inventory> lowStockProducts = getLowStockProducts();
-        for (Inventory inventory : lowStockProducts) {
-            alertService.sendLowStockAlert(inventory);
-        }
+        // 预警功能已简化，可从仪表盘查看低库存商品
     }
 }

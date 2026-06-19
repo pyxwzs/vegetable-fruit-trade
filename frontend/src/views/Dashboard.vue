@@ -11,25 +11,13 @@
     >
       <template #default>
         <span class="daily-meta">
-          <template v-if="hasPerm('sales:view')">
-            今日出库销售额 <strong>¥{{ fmtMoney(dailyReport.realizedSales) }}</strong>
-            ｜ 新销售单 {{ dailyReport.newOrderCount }} 笔
-          </template>
-          <template v-if="hasPerm('purchase:view')">
-            <template v-if="hasPerm('sales:view')">｜ </template>
-            新采购单 {{ dailyReport.newPurchaseOrderCount }} 笔
-            ｜ 待审采购 {{ dailyReport.pendingPurchaseCount }}
-          </template>
-          <template v-if="hasPerm('sales:view')">
-            ｜ 待审销售 {{ dailyReport.pendingSalesCount }}
-          </template>
-          <template v-if="hasInventoryPerm">
-            ｜ 库存预警 {{ dailyReport.lowStockLineCount }} 条
-            ｜ 临期 {{ dailyReport.expiringSkuCount }} 条
-          </template>
-          <template v-if="hasPerm('sales:view')">
-            ｜ 授信预警 {{ dailyReport.creditWarningCount }} 户
-          </template>
+          今日出库销售额 <strong>¥{{ fmtMoney(dailyReport.realizedSales) }}</strong>
+          ｜ 新销售单 {{ dailyReport.newOrderCount }} 笔
+          ｜ 新采购单 {{ dailyReport.newPurchaseOrderCount }} 笔
+          ｜ 待审采购 {{ dailyReport.pendingPurchaseCount }}
+          ｜ 待审销售 {{ dailyReport.pendingSalesCount }}
+          ｜ 库存预警 {{ dailyReport.lowStockLineCount }} 条
+          ｜ 临期 {{ dailyReport.expiringSkuCount }} 条
         </span>
       </template>
     </el-alert>
@@ -55,8 +43,7 @@
 
     <!-- 图表 + 预警 -->
     <el-row :gutter="20" class="chart-row">
-      <!-- 销售趋势：仅有销售权限才显示 -->
-      <el-col :span="hasInventoryPerm ? 16 : 24" v-if="hasPerm('sales:view')">
+      <el-col :span="16">
         <el-card>
           <template #header>
             <span>销售趋势（近7日出库额）</span>
@@ -65,8 +52,7 @@
         </el-card>
       </el-col>
 
-      <!-- 库存预警：有库存权限才显示 -->
-      <el-col :span="hasPerm('sales:view') ? 8 : 24" v-if="hasInventoryPerm">
+      <el-col :span="8">
         <el-card>
           <template #header>
             <span>库存预警</span>
@@ -87,12 +73,8 @@
     </el-row>
 
     <!-- 待办订单表格 -->
-    <el-row :gutter="20" class="table-row" v-if="hasPerm('purchase:view') || hasPerm('sales:view')">
-      <!-- 采购待办 -->
-      <el-col
-          :span="hasPerm('purchase:view') && hasPerm('sales:view') ? 12 : 24"
-          v-if="hasPerm('purchase:view')"
-      >
+    <el-row :gutter="20" class="table-row">
+      <el-col :span="12">
         <el-card>
           <template #header>
             <div class="card-header">
@@ -119,11 +101,7 @@
         </el-card>
       </el-col>
 
-      <!-- 销售待办 -->
-      <el-col
-          :span="hasPerm('purchase:view') && hasPerm('sales:view') ? 12 : 24"
-          v-if="hasPerm('sales:view')"
-      >
+      <el-col :span="12">
         <el-card>
           <template #header>
             <div class="card-header">
@@ -155,29 +133,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useStore } from 'vuex'
 import * as echarts from 'echarts'
-import {
-  ShoppingCart,
-  Money,
-  Goods,
-  User,
-  WarningFilled,
-  Clock
-} from '@element-plus/icons-vue'
+import { ShoppingCart, Money, Goods, User, WarningFilled, Clock } from '@element-plus/icons-vue'
 import { getExpiringProducts, getLowStockProducts } from '@/api/inventory'
 import { getPurchaseOrders } from '@/api/purchase'
 import { getSalesOrders } from '@/api/sales'
 import { getHomeSummary } from '@/api/analytics'
 
-const store = useStore()
-const hasPerm = (code) => store.getters['user/hasPermission'](code)
-
-const hasInventoryPerm = computed(
-  () => hasPerm('inventory:view') || hasPerm('inventory:inbound') || hasPerm('inventory:outbound') || hasPerm('user:manage')
-)
-
-// ── 原始数据 ──────────────────────────────────────────
 const homeData = ref(null)
 const dailyReport = ref(null)
 const weekTrend = ref([])
@@ -189,7 +151,6 @@ const reportDate = computed(() => dailyReport.value?.date || '')
 const fmtMoney = (v) => (v != null ? Number(v).toFixed(2) : '0.00')
 const mk = (title, value, icon, color) => ({ title, value: String(value ?? 0), icon, color })
 
-// ── 角色自适应统计卡片 ────────────────────────────────
 const statistics = computed(() => {
   const s = homeData.value
   const dr = s?.dailyReport
@@ -201,41 +162,6 @@ const statistics = computed(() => {
       mk('启用客户数', 0, User, '#F56C6C')
     ]
   }
-
-  const canPurchase = hasPerm('purchase:view')
-  const canSales = hasPerm('sales:view')
-
-  if (canPurchase && !canSales) {
-    // 采购员：采购相关统计
-    return [
-      mk('今日采购新单', dr.newPurchaseOrderCount, ShoppingCart, '#67C23A'),
-      mk('待审采购', dr.pendingPurchaseCount, ShoppingCart, '#E6A23C'),
-      mk('低库存预警', dr.lowStockLineCount, WarningFilled, '#F56C6C'),
-      mk('临期预警', dr.expiringSkuCount, Clock, '#FA8C16')
-    ]
-  }
-
-  if (canSales && !canPurchase) {
-    // 销售员：销售相关统计
-    return [
-      { title: '今日销售额', value: '¥ ' + fmtMoney(dr.realizedSales), icon: Money, color: '#409EFF' },
-      mk('今日新销售单', dr.newOrderCount, Goods, '#67C23A'),
-      mk('待审销售', dr.pendingSalesCount, Goods, '#E6A23C'),
-      mk('授信预警', dr.creditWarningCount, WarningFilled, '#F56C6C')
-    ]
-  }
-
-  if (!canPurchase && !canSales) {
-    // 仓管员：库存相关统计
-    return [
-      mk('库存商品数', s.stockKeepingProductCount, Goods, '#409EFF'),
-      mk('低库存预警', dr.lowStockLineCount, WarningFilled, '#F56C6C'),
-      mk('临期预警', dr.expiringSkuCount, Clock, '#E6A23C'),
-      { title: '今日出库额', value: '¥ ' + fmtMoney(dr.realizedSales), icon: Money, color: '#67C23A' }
-    ]
-  }
-
-  // 管理员 / 财务（同时有采购+销售视图权限）
   return [
     { title: '今日销售额', value: '¥ ' + fmtMoney(dr.realizedSales), icon: Money, color: '#409EFF' },
     mk('今日采购新单', dr.newPurchaseOrderCount, ShoppingCart, '#67C23A'),
@@ -244,13 +170,12 @@ const statistics = computed(() => {
   ]
 })
 
-// ── 图表 ──────────────────────────────────────────────
 const salesChart = ref(null)
 let salesChartInst = null
 let resizeHandler = null
 
 const renderSalesChart = () => {
-  if (!salesChart.value || !hasPerm('sales:view')) return
+  if (!salesChart.value) return
   if (!salesChartInst) salesChartInst = echarts.init(salesChart.value)
   const pts = weekTrend.value || []
   salesChartInst.setOption({
@@ -275,7 +200,6 @@ const renderSalesChart = () => {
   })
 }
 
-// ── 数据加载 ──────────────────────────────────────────
 const loadHome = async () => {
   try {
     const res = await getHomeSummary()
@@ -289,7 +213,6 @@ const loadHome = async () => {
 }
 
 const loadWarnings = async () => {
-  if (!hasInventoryPerm.value) return
   try {
     const [expiring, lowStock] = await Promise.all([
       getExpiringProducts(),
@@ -316,13 +239,12 @@ const loadWarnings = async () => {
 
 const loadPendingOrders = async () => {
   try {
-    const calls = []
-    if (hasPerm('purchase:view')) calls.push(getPurchaseOrders({ status: 'PENDING', page: 0, size: 8 }))
-    if (hasPerm('sales:view'))    calls.push(getSalesOrders({ status: 'PENDING', page: 0, size: 8 }))
-    const results = await Promise.all(calls)
-    let i = 0
-    if (hasPerm('purchase:view')) pendingPurchases.value = results[i++]?.data?.content || []
-    if (hasPerm('sales:view'))    pendingSales.value    = results[i++]?.data?.content || []
+    const [purchase, sales] = await Promise.all([
+      getPurchaseOrders({ status: 'PENDING', page: 0, size: 8 }),
+      getSalesOrders({ status: 'PENDING', page: 0, size: 8 })
+    ])
+    pendingPurchases.value = purchase.data?.content || []
+    pendingSales.value = sales.data?.content || []
   } catch (e) {
     console.error('加载待办订单失败', e)
   }

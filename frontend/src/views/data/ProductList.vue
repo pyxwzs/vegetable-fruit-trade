@@ -268,7 +268,6 @@ import {
   getProductPriceHistory
 } from '@/api/product'
 import { listCategories } from '@/api/category'
-import { uploadFile } from '@/api/file'
 import { formatDateTime } from '@/utils/date'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 
@@ -693,23 +692,8 @@ const submitForm = async () => {
 }
 
 const uploadProductImage = async (options) => {
-  try {
-    const fd = new FormData()
-    fd.append('file', options.file)
-    fd.append('businessType', 'product')
-    if (form.id) {
-      fd.append('businessId', String(form.id))
-    }
-    const res = await uploadFile(fd)
-    const meta = res.data
-    if (meta?.url) {
-      form.imageUrl = meta.url
-      ElMessage.success('图片已上传')
-    }
-    options.onSuccess(res)
-  } catch (e) {
-    options.onError(e)
-  }
+  ElMessage.info('图片上传功能暂未启用')
+  options.onError(new Error('图片上传功能暂未启用'))
 }
 
 const beforeAvatarUpload = (file) => {

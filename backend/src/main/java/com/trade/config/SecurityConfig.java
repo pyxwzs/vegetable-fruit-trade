@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -22,7 +21,6 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -36,15 +34,8 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                // 放行认证相关接口
-                .antMatchers("/auth/config", "/auth/login", "/auth/login/mfa-challenge", "/auth/login/mfa-verify",
-                        "/auth/register/challenge", "/auth/register/verify", "/auth/refresh",
-                        "/auth/forgot-password", "/auth/reset-password").permitAll()
-                // 放行 Actuator 健康检查
+                .antMatchers("/auth/login", "/auth/refresh").permitAll()
                 .antMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                // 放行测试接口
-                .antMatchers("/test/**").permitAll()
-                // 其他所有请求都需要认证
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
