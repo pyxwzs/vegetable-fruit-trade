@@ -6,6 +6,25 @@
 CREATE DATABASE IF NOT EXISTS trade_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE trade_db;
 
+-- 按外键依赖顺序逆向删表，保证重复执行不报错
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS return_finance_requests;
+DROP TABLE IF EXISTS sales_order_items;
+DROP TABLE IF EXISTS sales_orders;
+DROP TABLE IF EXISTS purchase_order_items;
+DROP TABLE IF EXISTS purchase_orders;
+DROP TABLE IF EXISTS inventory_stocktake_logs;
+DROP TABLE IF EXISTS inventory_transfer_logs;
+DROP TABLE IF EXISTS inventories;
+DROP TABLE IF EXISTS product_price_history;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS customers;
+DROP TABLE IF EXISTS suppliers;
+DROP TABLE IF EXISTS warehouses;
+DROP TABLE IF EXISTS users;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ── 用户表（单管理员，去除角色/MFA/邮件字段）────────────────
 CREATE TABLE users (
     id          BIGINT       PRIMARY KEY AUTO_INCREMENT,
