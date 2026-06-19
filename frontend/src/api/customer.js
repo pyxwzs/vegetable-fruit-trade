@@ -22,12 +22,6 @@ export function getActiveCustomers() {
   })
 }
 
-export function getCreditWarnings() {
-  return request({
-    url: '/customers/credit-warnings',
-    method: 'get'
-  })
-}
 
 export function createCustomer(data) {
   return request({

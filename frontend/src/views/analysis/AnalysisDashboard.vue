@@ -138,11 +138,6 @@
             <el-table-column label="利润率" width="100">
               <template #default="{ row }">{{ (Number(row.profitMargin || 0) * 100).toFixed(1) }}%</template>
             </el-table-column>
-            <el-table-column prop="creditLevel" label="信用" width="90">
-              <template #default="{ row }">
-                <el-tag :type="creditTag(row.creditLevel)" size="small">{{ row.creditLevel }}级</el-tag>
-              </template>
-            </el-table-column>
           </el-table>
         </el-card>
       </el-col>
@@ -192,8 +187,6 @@ const dailyReport = ref(null)
 
 const fmt = (v) => (v != null ? Number(v).toFixed(2) : '0.00')
 
-const creditTag = (lv) =>
-  ({ A: 'success', B: 'primary', C: 'warning', D: 'danger' }[lv] || 'info')
 
 const loadDailyReport = async () => {
   try {

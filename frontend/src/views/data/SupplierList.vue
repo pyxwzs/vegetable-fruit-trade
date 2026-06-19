@@ -4,9 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>供应商管理</span>
-          <div>
-            <el-button type="primary" @click="openForm()">新增供应商</el-button>
-          </div>
+          <el-button type="primary" @click="openForm()">新增供应商</el-button>
         </div>
       </template>
 
@@ -21,7 +19,6 @@
         <el-select v-model="status" placeholder="状态" clearable style="width: 140px">
           <el-option label="启用" value="ACTIVE" />
           <el-option label="停用" value="INACTIVE" />
-          <el-option label="黑名单" value="BLACKLISTED" />
         </el-select>
         <el-button type="primary" @click="handleSearch">搜索</el-button>
         <el-button @click="resetSearch">重置</el-button>
@@ -31,19 +28,16 @@
         <el-table-column prop="supplierCode" label="编码" width="120" />
         <el-table-column prop="name" label="名称" min-width="160" />
         <el-table-column prop="contact" label="联系人" width="100" />
-        <el-table-column prop="phone" label="电话" width="120" />
-        <el-table-column label="信用评级" width="130">
+        <el-table-column prop="phone" label="电话" width="130" />
+        <el-table-column prop="address" label="地址" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="90">
           <template #default="{ row }">
-            <el-rate :model-value="Number(row.creditRating) || 0" disabled allow-half />
+            <el-tag :type="row.status === 'ACTIVE' ? 'success' : 'info'">
+              {{ row.status === 'ACTIVE' ? '启用' : '停用' }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="deliveryOnTimeRate" label="准时率%" width="90" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="statusTag(row.status)">{{ statusText(row.status) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="openForm(row)">编辑</el-button>
             <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
@@ -63,43 +57,30 @@
       />
     </el-card>
 
-    <el-dialog v-model="formVisible" :title="formTitle" width="560px" destroy-on-close @close="resetForm">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+    <el-dialog v-model="formVisible" :title="formTitle" width="500px" destroy-on-close @close="resetForm">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
         <el-form-item label="供应商编码" prop="supplierCode">
           <el-input v-model="form.supplierCode" :disabled="!!form.id" placeholder="唯一编码" />
         </el-form-item>
         <el-form-item label="名称" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item label="联系人" prop="contact">
+        <el-form-item label="联系人">
           <el-input v-model="form.contact" />
         </el-form-item>
-        <el-form-item label="电话" prop="phone">
+        <el-form-item label="电话">
           <el-input v-model="form.phone" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" />
-        </el-form-item>
-        <el-form-item label="地址" prop="address">
+        <el-form-item label="地址">
           <el-input v-model="form.address" type="textarea" rows="2" />
         </el-form-item>
-        <el-form-item label="信用评级" prop="creditRating">
-          <el-input-number v-model="form.creditRating" :min="0" :max="5" :step="0.1" :precision="2" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="准时交货率%" prop="deliveryOnTimeRate">
-          <el-input-number v-model="form.deliveryOnTimeRate" :min="0" :max="100" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="质量合格率%" prop="qualityPassRate">
-          <el-input-number v-model="form.qualityPassRate" :min="0" :max="100" :precision="2" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item label="状态">
           <el-select v-model="form.status" style="width: 100%">
             <el-option label="启用" value="ACTIVE" />
             <el-option label="停用" value="INACTIVE" />
-            <el-option label="黑名单" value="BLACKLISTED" />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
+        <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" rows="2" />
         </el-form-item>
       </el-form>
@@ -134,11 +115,7 @@ const form = reactive({
   name: '',
   contact: '',
   phone: '',
-  email: '',
   address: '',
-  creditRating: 4,
-  deliveryOnTimeRate: 90,
-  qualityPassRate: 95,
   status: 'ACTIVE',
   remark: ''
 })
@@ -146,17 +123,6 @@ const form = reactive({
 const rules = {
   supplierCode: [{ required: true, message: '请输入编码', trigger: 'blur' }],
   name: [{ required: true, message: '请输入名称', trigger: 'blur' }]
-}
-
-const statusTag = (s) => {
-  if (s === 'ACTIVE') return 'success'
-  if (s === 'BLACKLISTED') return 'danger'
-  return 'info'
-}
-
-const statusText = (s) => {
-  const m = { ACTIVE: '启用', INACTIVE: '停用', BLACKLISTED: '黑名单' }
-  return m[s] || s
 }
 
 const loadData = async () => {
@@ -177,55 +143,20 @@ const loadData = async () => {
   }
 }
 
-const handleSearch = () => {
-  page.value = 1
-  loadData()
-}
-
-const resetSearch = () => {
-  searchKeyword.value = ''
-  status.value = ''
-  page.value = 1
-  loadData()
-}
-
-const resetForm = () => {
-  formRef.value?.resetFields?.()
-}
+const handleSearch = () => { page.value = 1; loadData() }
+const resetSearch = () => { searchKeyword.value = ''; status.value = ''; page.value = 1; loadData() }
+const resetForm = () => { formRef.value?.resetFields?.() }
 
 const openForm = (row) => {
   formTitle.value = row ? '编辑供应商' : '新增供应商'
-  if (row) {
-    Object.assign(form, {
-      id: row.id,
-      supplierCode: row.supplierCode,
-      name: row.name,
-      contact: row.contact || '',
-      phone: row.phone || '',
-      email: row.email || '',
-      address: row.address || '',
-      creditRating: row.creditRating != null ? Number(row.creditRating) : 4,
-      deliveryOnTimeRate: row.deliveryOnTimeRate ?? 90,
-      qualityPassRate: row.qualityPassRate != null ? Number(row.qualityPassRate) : 95,
-      status: row.status || 'ACTIVE',
-      remark: row.remark || ''
-    })
-  } else {
-    Object.assign(form, {
-      id: null,
-      supplierCode: '',
-      name: '',
-      contact: '',
-      phone: '',
-      email: '',
-      address: '',
-      creditRating: 4,
-      deliveryOnTimeRate: 90,
-      qualityPassRate: 95,
-      status: 'ACTIVE',
-      remark: ''
-    })
-  }
+  Object.assign(form, row ? {
+    id: row.id, supplierCode: row.supplierCode, name: row.name,
+    contact: row.contact || '', phone: row.phone || '',
+    address: row.address || '', status: row.status || 'ACTIVE', remark: row.remark || ''
+  } : {
+    id: null, supplierCode: '', name: '', contact: '', phone: '',
+    address: '', status: 'ACTIVE', remark: ''
+  })
   formVisible.value = true
 }
 
@@ -236,72 +167,31 @@ const submitForm = async () => {
     submitting.value = true
     try {
       const payload = {
-        supplierCode: form.supplierCode,
-        name: form.name,
-        contact: form.contact || undefined,
-        phone: form.phone || undefined,
-        email: form.email || undefined,
-        address: form.address || undefined,
-        creditRating: form.creditRating,
-        deliveryOnTimeRate: form.deliveryOnTimeRate,
-        qualityPassRate: form.qualityPassRate,
-        status: form.status,
-        remark: form.remark || undefined
+        supplierCode: form.supplierCode, name: form.name,
+        contact: form.contact || undefined, phone: form.phone || undefined,
+        address: form.address || undefined, status: form.status, remark: form.remark || undefined
       }
-      if (form.id) {
-        await updateSupplier(form.id, payload)
-        ElMessage.success('已保存')
-      } else {
-        await createSupplier(payload)
-        ElMessage.success('已创建')
-      }
+      if (form.id) { await updateSupplier(form.id, payload); ElMessage.success('已保存') }
+      else { await createSupplier(payload); ElMessage.success('已创建') }
       formVisible.value = false
       loadData()
-    } catch {
-      /* 拦截器 */
-    } finally {
-      submitting.value = false
-    }
+    } catch { /* 拦截器 */ } finally { submitting.value = false }
   })
 }
 
 const handleDelete = (row) => {
   ElMessageBox.confirm(`确定删除供应商「${row.name}」？`, '提示', { type: 'warning' })
-    .then(async () => {
-      try {
-        await deleteSupplier(row.id)
-        ElMessage.success('已删除')
-        loadData()
-      } catch {
-        /*  */
-      }
-    })
+    .then(async () => { await deleteSupplier(row.id); ElMessage.success('已删除'); loadData() })
     .catch(() => {})
 }
 
-onMounted(() => {
-  loadData()
-})
+onMounted(() => loadData())
 </script>
 
 <style scoped lang="scss">
 .supplier-list {
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .search-bar {
-    margin-bottom: 16px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .pagination {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-  }
+  .card-header { display: flex; justify-content: space-between; align-items: center; }
+  .search-bar { margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .pagination { margin-top: 20px; display: flex; justify-content: flex-end; }
 }
 </style>

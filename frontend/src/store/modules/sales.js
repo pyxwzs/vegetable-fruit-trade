@@ -1,4 +1,4 @@
-import { getSalesOrders, getSalesOrder, createSalesOrder, approveSalesOrder, shipSalesOrder } from '@/api/sales'
+import { getSalesOrders, getSalesOrder, createSalesOrder, completeSalesOrder, cancelSalesOrder } from '@/api/sales'
 
 export default {
     namespaced: true,
@@ -9,12 +9,8 @@ export default {
     },
 
     mutations: {
-        SET_ORDERS(state, orders) {
-            state.orders = orders
-        },
-        SET_CURRENT_ORDER(state, order) {
-            state.currentOrder = order
-        }
+        SET_ORDERS(state, orders) { state.orders = orders },
+        SET_CURRENT_ORDER(state, order) { state.currentOrder = order }
     },
 
     actions: {
@@ -35,13 +31,13 @@ export default {
             return response.data
         },
 
-        async approveOrder(_, id) {
-            const response = await approveSalesOrder(id)
+        async completeOrder(_, id) {
+            const response = await completeSalesOrder(id)
             return response.data
         },
 
-        async shipOrder(_, { id, warehouseId }) {
-            const response = await shipSalesOrder(id, warehouseId ?? 1)
+        async cancelOrder(_, id) {
+            const response = await cancelSalesOrder(id)
             return response.data
         }
     }

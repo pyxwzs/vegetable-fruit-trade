@@ -135,7 +135,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import { ShoppingCart, Money, Goods, User } from '@element-plus/icons-vue'
-import { getExpiringProducts, getLowStockProducts } from '@/api/inventory'
+import { getLowStockProducts } from '@/api/inventory'
 import { getPurchaseOrders } from '@/api/purchase'
 import { getSalesOrders } from '@/api/sales'
 import { getHomeSummary } from '@/api/analytics'
@@ -214,17 +214,8 @@ const loadHome = async () => {
 
 const loadWarnings = async () => {
   try {
-    const [expiring, lowStock] = await Promise.all([
-      getExpiringProducts(),
-      getLowStockProducts()
-    ])
+    const lowStock = await getLowStockProducts()
     warnings.value = [
-      ...(expiring.data || []).map((item) => ({
-        id: 'e-' + item.id,
-        productName: item.product?.name || item.productName,
-        type: 'danger',
-        message: '即将过期'
-      })),
       ...(lowStock.data || []).map((item) => ({
         id: 'l-' + item.id,
         productName: item.product?.name || item.productName,
@@ -251,13 +242,11 @@ const loadPendingOrders = async () => {
 }
 
 const getStatusType = (status) => ({
-  PENDING: 'info', APPROVED: 'success', SHIPPED: 'warning',
-  DELIVERED: 'primary', COMPLETED: 'success', CANCELLED: 'danger'
+  PENDING: 'info', COMPLETED: 'success', CANCELLED: 'danger'
 }[status] || 'info')
 
 const statusText = (status) => ({
-  PENDING: '待审核', APPROVED: '已审核', SHIPPED: '已发货',
-  RECEIVED: '已收货', DELIVERED: '已送达', COMPLETED: '已完成', CANCELLED: '已取消'
+  PENDING: '待处理', COMPLETED: '已完成', CANCELLED: '已取消'
 }[status] || status)
 
 onMounted(() => {

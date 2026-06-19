@@ -2,7 +2,6 @@ import {
     getInventories,
     inbound as inboundRequest,
     outbound as outboundRequest,
-    getExpiringProducts,
     getLowStockProducts
 } from '@/api/inventory'
 
@@ -11,20 +10,12 @@ export default {
 
     state: {
         inventories: [],
-        expiringProducts: [],
         lowStockProducts: []
     },
 
     mutations: {
-        SET_INVENTORIES(state, inventories) {
-            state.inventories = inventories
-        },
-        SET_EXPIRING_PRODUCTS(state, products) {
-            state.expiringProducts = products
-        },
-        SET_LOW_STOCK_PRODUCTS(state, products) {
-            state.lowStockProducts = products
-        }
+        SET_INVENTORIES(state, inventories) { state.inventories = inventories },
+        SET_LOW_STOCK_PRODUCTS(state, products) { state.lowStockProducts = products }
     },
 
     actions: {
@@ -43,12 +34,6 @@ export default {
         async outbound(context, data) {
             void context
             const response = await outboundRequest(data)
-            return response.data
-        },
-
-        async fetchExpiringProducts({ commit }) {
-            const response = await getExpiringProducts()
-            commit('SET_EXPIRING_PRODUCTS', response.data)
             return response.data
         },
 

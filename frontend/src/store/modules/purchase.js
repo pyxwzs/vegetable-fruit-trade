@@ -1,4 +1,4 @@
-import { getPurchaseOrders, getPurchaseOrder, createPurchaseOrder, approvePurchaseOrder, receivePurchaseOrder } from '@/api/purchase'
+import { getPurchaseOrders, getPurchaseOrder, createPurchaseOrder, completePurchaseOrder, cancelPurchaseOrder } from '@/api/purchase'
 
 export default {
     namespaced: true,
@@ -9,12 +9,8 @@ export default {
     },
 
     mutations: {
-        SET_ORDERS(state, orders) {
-            state.orders = orders
-        },
-        SET_CURRENT_ORDER(state, order) {
-            state.currentOrder = order
-        }
+        SET_ORDERS(state, orders) { state.orders = orders },
+        SET_CURRENT_ORDER(state, order) { state.currentOrder = order }
     },
 
     actions: {
@@ -35,13 +31,13 @@ export default {
             return response.data
         },
 
-        async approveOrder(_, id) {
-            const response = await approvePurchaseOrder(id)
+        async completeOrder(_, id) {
+            const response = await completePurchaseOrder(id)
             return response.data
         },
 
-        async receiveOrder(_, id) {
-            const response = await receivePurchaseOrder(id)
+        async cancelOrder(_, id) {
+            const response = await cancelPurchaseOrder(id)
             return response.data
         }
     }
