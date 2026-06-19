@@ -14,10 +14,8 @@
           今日出库销售额 <strong>¥{{ fmtMoney(dailyReport.realizedSales) }}</strong>
           ｜ 新销售单 {{ dailyReport.newOrderCount }} 笔
           ｜ 新采购单 {{ dailyReport.newPurchaseOrderCount }} 笔
-          ｜ 待审采购 {{ dailyReport.pendingPurchaseCount }}
-          ｜ 待审销售 {{ dailyReport.pendingSalesCount }}
-          ｜ 库存预警 {{ dailyReport.lowStockLineCount }} 条
-          ｜ 临期 {{ dailyReport.expiringSkuCount }} 条
+          ｜ 待处理采购 {{ dailyReport.pendingPurchaseCount }}
+          ｜ 待处理销售 {{ dailyReport.pendingSalesCount }}
         </span>
       </template>
     </el-alert>
@@ -41,33 +39,14 @@
       </el-col>
     </el-row>
 
-    <!-- 图表 + 预警 -->
+    <!-- 图表 -->
     <el-row :gutter="20" class="chart-row">
-      <el-col :span="16">
+      <el-col :span="24">
         <el-card>
           <template #header>
             <span>销售趋势（近7日出库额）</span>
           </template>
           <div ref="salesChart" style="height: 300px"></div>
-        </el-card>
-      </el-col>
-
-      <el-col :span="8">
-        <el-card>
-          <template #header>
-            <span>库存预警</span>
-          </template>
-          <div class="warning-list">
-            <div v-for="item in warnings" :key="item.id" class="warning-item">
-              <div class="warning-info">
-                <div class="warning-name">{{ item.productName }}</div>
-                <div class="warning-desc">
-                  <el-tag :type="item.type" size="small">{{ item.message }}</el-tag>
-                </div>
-              </div>
-            </div>
-            <el-empty v-if="warnings.length === 0" description="暂无预警" />
-          </div>
         </el-card>
       </el-col>
     </el-row>
@@ -135,7 +114,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import { ShoppingCart, Money, Goods, User } from '@element-plus/icons-vue'
-import { getLowStockProducts } from '@/api/inventory'
 import { getPurchaseOrders } from '@/api/purchase'
 import { getSalesOrders } from '@/api/sales'
 import { getHomeSummary } from '@/api/analytics'
@@ -143,7 +121,6 @@ import { getHomeSummary } from '@/api/analytics'
 const homeData = ref(null)
 const dailyReport = ref(null)
 const weekTrend = ref([])
-const warnings = ref([])
 const pendingPurchases = ref([])
 const pendingSales = ref([])
 
@@ -212,22 +189,6 @@ const loadHome = async () => {
   }
 }
 
-const loadWarnings = async () => {
-  try {
-    const lowStock = await getLowStockProducts()
-    warnings.value = [
-      ...(lowStock.data || []).map((item) => ({
-        id: 'l-' + item.id,
-        productName: item.product?.name || item.productName,
-        type: 'warning',
-        message: '库存不足'
-      }))
-    ]
-  } catch (e) {
-    console.error('加载预警失败', e)
-  }
-}
-
 const loadPendingOrders = async () => {
   try {
     const [purchase, sales] = await Promise.all([
@@ -251,7 +212,6 @@ const statusText = (status) => ({
 
 onMounted(() => {
   loadHome()
-  loadWarnings()
   loadPendingOrders()
   resizeHandler = () => salesChartInst?.resize()
   window.addEventListener('resize', resizeHandler)
@@ -290,20 +250,6 @@ onUnmounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
-  .warning-list {
-    .warning-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #ebeef5;
-      &:last-child { border-bottom: none; }
-      .warning-info {
-        .warning-name { font-weight: 500; margin-bottom: 4px; }
-        .warning-desc { font-size: 12px; }
-      }
-    }
   }
 }
 </style>

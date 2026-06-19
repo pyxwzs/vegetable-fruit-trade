@@ -12,6 +12,3 @@ export function outbound(data) {
   return request({ url: '/inventory/outbound', method: 'post', data })
 }
 
-export function getLowStockProducts() {
-  return request({ url: '/inventory/low-stock', method: 'get' })
-}

@@ -15,11 +15,8 @@
         当日出库销售额 <strong>¥{{ fmt(dailyReport.realizedSales) }}</strong>
         ｜ 新销售单 {{ dailyReport.newOrderCount }} 笔
         ｜ 新采购单 {{ dailyReport.newPurchaseOrderCount }} 笔
-        ｜ 待审采购 <el-tag size="small" type="warning">{{ dailyReport.pendingPurchaseCount }}</el-tag>
-        ｜ 待审销售 <el-tag size="small" type="warning">{{ dailyReport.pendingSalesCount }}</el-tag>
-        ｜ 库存预警 {{ dailyReport.lowStockLineCount }} 条
-        ｜ 临期 {{ dailyReport.expiringSkuCount }} 条
-        ｜ 授信预警 {{ dailyReport.creditWarningCount }} 户
+        ｜ 待处理采购 <el-tag size="small" type="warning">{{ dailyReport.pendingPurchaseCount }}</el-tag>
+        ｜ 待处理销售 <el-tag size="small" type="warning">{{ dailyReport.pendingSalesCount }}</el-tag>
       </p>
     </el-card>
 

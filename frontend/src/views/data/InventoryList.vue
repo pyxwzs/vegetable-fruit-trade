@@ -22,21 +22,11 @@
         <el-button @click="resetSearch">重置</el-button>
       </div>
 
-      <div v-if="lowStockList.length" class="warning-block">
-        <el-alert type="warning" show-icon :closable="false">
-          <template #title>预警：低库存（&lt;10）{{ lowStockList.length }} 条</template>
-        </el-alert>
-      </div>
-
       <el-table :data="inventories" style="width: 100%" v-loading="loading" border>
         <el-table-column prop="product.productCode" label="商品编码" width="120" />
         <el-table-column prop="product.name" label="商品名称" min-width="160" />
         <el-table-column prop="warehouse.name" label="仓库" width="120" />
-        <el-table-column prop="quantity" label="当前库存" width="110">
-          <template #default="{ row }">
-            <span :class="{ 'low-stock': isLowStock(row) }">{{ row.quantity }}</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="quantity" label="当前库存" width="110" />
         <el-table-column prop="product.unit" label="单位" width="80" />
       </el-table>
 
@@ -57,10 +47,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getInventories, getLowStockProducts } from '@/api/inventory'
+import { getInventories } from '@/api/inventory'
 import { getActiveWarehouses } from '@/api/warehouse'
-
-const LOW_STOCK_THRESHOLD = 10
 
 const loading = ref(false)
 const inventories = ref([])
@@ -70,14 +58,9 @@ const total = ref(0)
 const searchKeyword = ref('')
 const warehouseId = ref(null)
 const warehouses = ref([])
-const lowStockList = ref([])
 
 const loadWarehouses = async () => {
   try { warehouses.value = (await getActiveWarehouses()).data || [] } catch { warehouses.value = [] }
-}
-
-const loadWarnings = async () => {
-  try { lowStockList.value = (await getLowStockProducts()).data || [] } catch { lowStockList.value = [] }
 }
 
 const loadData = async () => {
@@ -95,20 +78,13 @@ const loadData = async () => {
 const handleSearch = () => { page.value = 1; loadData() }
 const resetSearch = () => { searchKeyword.value = ''; warehouseId.value = null; page.value = 1; loadData() }
 
-const isLowStock = (row) => { const q = Number(row.quantity); return q > 0 && q < LOW_STOCK_THRESHOLD }
-
-onMounted(() => {
-  loadWarehouses().then(() => loadData())
-  loadWarnings()
-})
+onMounted(() => { loadWarehouses().then(() => loadData()) })
 </script>
 
 <style scoped lang="scss">
 .inventory-list {
   .card-header { display: flex; justify-content: space-between; align-items: center; }
   .search-bar { margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .warning-block { margin-bottom: 16px; }
   .pagination { margin-top: 20px; display: flex; justify-content: flex-end; }
-  .low-stock { color: #f56c6c; font-weight: bold; }
 }
 </style>
