@@ -27,29 +27,18 @@ public class ReturnRequestController {
         return ApiResponse.success(returnRequestService.getRequests(kind, status, pageable));
     }
 
-    @PostMapping("/{id}/warehouse-approve")
-    public ApiResponse<ReturnRequestDTO> warehouseApprove(@PathVariable Long id) {
-        return ApiResponse.success(returnRequestService.warehouseApprove(id));
+    @PostMapping("/{id}/approve")
+    public ApiResponse<ReturnRequestDTO> approve(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long warehouseId) {
+        return ApiResponse.success(returnRequestService.approve(id, warehouseId));
     }
 
-    @PostMapping("/{id}/warehouse-reject")
-    public ApiResponse<ReturnRequestDTO> warehouseReject(
+    @PostMapping("/{id}/reject")
+    public ApiResponse<ReturnRequestDTO> reject(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> body) {
         String reason = body != null ? body.get("reason") : null;
-        return ApiResponse.success(returnRequestService.warehouseReject(id, reason));
-    }
-
-    @PostMapping("/{id}/finance-approve")
-    public ApiResponse<ReturnRequestDTO> financeApprove(@PathVariable Long id) {
-        return ApiResponse.success(returnRequestService.financeApprove(id));
-    }
-
-    @PostMapping("/{id}/finance-reject")
-    public ApiResponse<ReturnRequestDTO> financeReject(
-            @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> body) {
-        String reason = body != null ? body.get("reason") : null;
-        return ApiResponse.success(returnRequestService.financeReject(id, reason));
+        return ApiResponse.success(returnRequestService.reject(id, reason));
     }
 }

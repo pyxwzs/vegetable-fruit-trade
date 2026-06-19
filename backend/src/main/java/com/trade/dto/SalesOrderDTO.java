@@ -10,12 +10,14 @@ import java.util.List;
 
 @Data
 public class SalesOrderDTO {
+
     @NotNull(message = "客户不能为空")
     private Long customerId;
 
     private LocalDate orderDate;
-    private LocalDate deliveryDate;
+
     private String paymentMethod;
+
     private String remark;
 
     @NotEmpty(message = "订单明细不能为空")

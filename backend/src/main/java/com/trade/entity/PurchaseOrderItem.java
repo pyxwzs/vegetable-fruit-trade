@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "purchase_order_items")
 public class PurchaseOrderItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,16 +25,13 @@ public class PurchaseOrderItem {
     private Product product;
 
     @Column(precision = 10, scale = 3)
-    private BigDecimal quantity; // 数量
-
-    @Column(precision = 10, scale = 3)
-    private BigDecimal returnedQuantity = BigDecimal.ZERO; // 累计已退货数量
+    private BigDecimal quantity;
 
     @Column(precision = 10, scale = 2)
-    private BigDecimal price; // 单价
+    private BigDecimal price;
 
     @Column(precision = 10, scale = 2)
-    private BigDecimal amount; // 金额 = 数量 * 单价
+    private BigDecimal amount;
 
     private String remark;
 }

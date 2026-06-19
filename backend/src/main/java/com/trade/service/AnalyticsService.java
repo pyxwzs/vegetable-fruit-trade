@@ -34,27 +34,23 @@ public class AnalyticsService {
     private final InventoryRepository inventoryRepository;
     private final InventoryService inventoryService;
     private final CustomerService customerService;
-    private final UserService userService;
 
     public DailyReportDTO getDailyReport(LocalDate date) {
         LocalDate d = date != null ? date : LocalDate.now();
-        Long scope = userService.resolveBizDataScopeUserId();
-        BigDecimal realized = salesOrderRepository.sumRealizedSalesBetween(d, d, scope);
-        long newSales = salesOrderRepository.countOrdersOnDate(d, scope);
-        long newPurchase = purchaseOrderRepository.countOrdersOnDate(d, scope);
-        long pendingPurchase = purchaseOrderRepository.countByStatusScoped(PurchaseOrder.OrderStatus.PENDING, scope);
-        long pendingSales = salesOrderRepository.countByStatusScoped(SalesOrder.OrderStatus.PENDING, scope);
+        BigDecimal realized = salesOrderRepository.sumRealizedSalesBetween(d, d);
+        long newSales = salesOrderRepository.countOrdersOnDate(d);
+        long newPurchase = purchaseOrderRepository.countOrdersOnDate(d);
+        long pendingPurchase = purchaseOrderRepository.countByStatus(PurchaseOrder.OrderStatus.PENDING);
+        long pendingSales = salesOrderRepository.countByStatus(SalesOrder.OrderStatus.PENDING);
         int lowStock = inventoryService.getLowStockProducts().size();
-        int expiring = inventoryService.getExpiringProducts().size();
-        return new DailyReportDTO(d, realized, newSales, newPurchase, pendingPurchase, pendingSales, lowStock, expiring, 0);
+        return new DailyReportDTO(d, realized, newSales, newPurchase, pendingPurchase, pendingSales, lowStock, 0, 0);
     }
 
     public HomeSummaryDTO getHomeSummary() {
         LocalDate today = LocalDate.now();
         LocalDate weekStart = today.minusDays(6);
-        Long scope = userService.resolveBizDataScopeUserId();
         DailyReportDTO daily = getDailyReport(today);
-        List<SalesTrendPointDTO> trend = buildFilledTrend(weekStart, today, salesOrderRepository.sumRealizedSalesByDay(weekStart, today, scope));
+        List<SalesTrendPointDTO> trend = buildFilledTrend(weekStart, today, salesOrderRepository.sumRealizedSalesByDay(weekStart, today));
         long sku = inventoryRepository.countDistinctProductsInStock();
         long activeCust = customerRepository.countByStatus(Customer.CustomerStatus.ACTIVE);
         return new HomeSummaryDTO(daily, trend, sku, activeCust);
@@ -63,21 +59,19 @@ public class AnalyticsService {
     public AnalyticsKpiDTO getOverviewKpi(String rangeType) {
         LocalDate[] cur = resolveRange(rangeType);
         LocalDate[] prev = previousRange(cur[0], cur[1]);
-        Long scope = userService.resolveBizDataScopeUserId();
+        BigDecimal salesCur = salesOrderRepository.sumRealizedSalesBetween(cur[0], cur[1]);
+        BigDecimal salesPrev = salesOrderRepository.sumRealizedSalesBetween(prev[0], prev[1]);
 
-        BigDecimal salesCur = salesOrderRepository.sumRealizedSalesBetween(cur[0], cur[1], scope);
-        BigDecimal salesPrev = salesOrderRepository.sumRealizedSalesBetween(prev[0], prev[1], scope);
-
-        Object[] profitCur = salesOrderItemRepository.sumRevenueAndEstimatedCost(cur[0], cur[1], scope);
-        Object[] profitPrev = salesOrderItemRepository.sumRevenueAndEstimatedCost(prev[0], prev[1], scope);
+        Object[] profitCur = salesOrderItemRepository.sumRevenueAndEstimatedCost(cur[0], cur[1]);
+        Object[] profitPrev = salesOrderItemRepository.sumRevenueAndEstimatedCost(prev[0], prev[1]);
         BigDecimal gpCur = grossProfitFromRow(profitCur);
         BigDecimal gpPrev = grossProfitFromRow(profitPrev);
 
-        long ordCur = salesOrderRepository.countOrdersBetween(cur[0], cur[1], scope);
-        long ordPrev = salesOrderRepository.countOrdersBetween(prev[0], prev[1], scope);
+        long ordCur = salesOrderRepository.countOrdersBetween(cur[0], cur[1]);
+        long ordPrev = salesOrderRepository.countOrdersBetween(prev[0], prev[1]);
 
-        long custCur = salesOrderRepository.countDistinctCustomersWithOrders(cur[0], cur[1], scope);
-        long custPrev = salesOrderRepository.countDistinctCustomersWithOrders(prev[0], prev[1], scope);
+        long custCur = salesOrderRepository.countDistinctCustomersWithOrders(cur[0], cur[1]);
+        long custPrev = salesOrderRepository.countDistinctCustomersWithOrders(prev[0], prev[1]);
 
         return new AnalyticsKpiDTO(
                 salesCur,
@@ -93,15 +87,13 @@ public class AnalyticsService {
 
     public List<SalesTrendPointDTO> getSalesTrend(String rangeType) {
         LocalDate[] r = resolveRange(rangeType);
-        Long scope = userService.resolveBizDataScopeUserId();
-        List<Object[]> rows = salesOrderRepository.sumRealizedSalesByDay(r[0], r[1], scope);
+        List<Object[]> rows = salesOrderRepository.sumRealizedSalesByDay(r[0], r[1]);
         return buildFilledTrend(r[0], r[1], rows);
     }
 
     public List<ProductSalesRankDTO> getProductRanking(String rangeType, int limit) {
         LocalDate[] r = resolveRange(rangeType);
-        Long scope = userService.resolveBizDataScopeUserId();
-        List<Object[]> rows = salesOrderItemRepository.sumSalesByProduct(r[0], r[1], scope);
+        List<Object[]> rows = salesOrderItemRepository.sumSalesByProduct(r[0], r[1]);
         int n = Math.min(limit > 0 ? limit : 10, rows.size());
         List<ProductSalesRankDTO> out = new ArrayList<>();
         for (int i = 0; i < n; i++) {
@@ -116,8 +108,7 @@ public class AnalyticsService {
 
     public ProfitSummaryDTO getProfitSummary(String rangeType) {
         LocalDate[] r = resolveRange(rangeType);
-        Long scope = userService.resolveBizDataScopeUserId();
-        Object[] rc = salesOrderItemRepository.sumRevenueAndEstimatedCost(r[0], r[1], scope);
+        Object[] rc = salesOrderItemRepository.sumRevenueAndEstimatedCost(r[0], r[1]);
         BigDecimal revenue = toBigDecimal(rc != null && rc.length > 0 ? rc[0] : null);
         BigDecimal cost = toBigDecimal(rc != null && rc.length > 1 ? rc[1] : null);
         BigDecimal profit = revenue.subtract(cost);
@@ -125,7 +116,7 @@ public class AnalyticsService {
                 ? profit.divide(revenue, 4, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
-        List<Object[]> catRows = salesOrderItemRepository.sumSalesByCategory(r[0], r[1], scope);
+        List<Object[]> catRows = salesOrderItemRepository.sumSalesByCategory(r[0], r[1]);
         List<ProfitSummaryDTO.CategorySalesDTO> cats = new ArrayList<>();
         for (Object[] row : catRows) {
             String name = row[0] != null ? row[0].toString() : "未分类";
@@ -142,7 +133,7 @@ public class AnalyticsService {
     }
 
     public List<ReplenishmentSuggestionDTO> getReplenishmentSuggestions() {
-        List<Object[]> rows = inventoryRepository.findProductsBelowAvailableThreshold(LOW_STOCK_THRESHOLD);
+        List<Object[]> rows = inventoryRepository.findLowStockByProduct(LOW_STOCK_THRESHOLD);
         List<ReplenishmentSuggestionDTO> out = new ArrayList<>();
         for (Object[] row : rows) {
             BigDecimal avail = toBigDecimal(row.length > 3 ? row[3] : null);
@@ -161,8 +152,7 @@ public class AnalyticsService {
 
     public List<CustomerValueRowDTO> getCustomerRanking(String rangeType, int limit) {
         LocalDate[] r = resolveRange(rangeType);
-        Long scope = userService.resolveBizDataScopeUserId();
-        List<Object[]> rows = salesOrderItemRepository.customerValueStats(r[0], r[1], scope);
+        List<Object[]> rows = salesOrderItemRepository.customerValueStats(r[0], r[1]);
         int n = Math.min(limit > 0 ? limit : 20, rows.size());
         List<CustomerValueRowDTO> out = new ArrayList<>();
         for (int i = 0; i < n; i++) {

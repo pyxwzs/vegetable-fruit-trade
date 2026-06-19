@@ -15,11 +15,11 @@ public interface SalesOrderItemRepository extends JpaRepository<SalesOrderItem, 
 
     boolean existsByProduct_Id(Long productId);
 
-    @Query("SELECT i.product.id, i.product.name, COALESCE(SUM(i.amount), 0) FROM SalesOrderItem i JOIN i.salesOrder o WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status IN ('SHIPPED', 'DELIVERED', 'COMPLETED') AND (:scope IS NULL OR o.salesman.id = :scope) GROUP BY i.product.id, i.product.name ORDER BY SUM(i.amount) DESC")
-    List<Object[]> sumSalesByProduct(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("scope") Long scopeUserId);
+    @Query("SELECT i.product.id, i.product.name, COALESCE(SUM(i.amount), 0) FROM SalesOrderItem i JOIN i.salesOrder o WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status = 'COMPLETED' GROUP BY i.product.id, i.product.name ORDER BY SUM(i.amount) DESC")
+    List<Object[]> sumSalesByProduct(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
-    @Query("SELECT COALESCE(SUM(i.amount), 0), 0 FROM SalesOrderItem i JOIN i.salesOrder o WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status IN ('SHIPPED', 'DELIVERED', 'COMPLETED') AND (:scope IS NULL OR o.salesman.id = :scope)")
-    Object[] sumRevenueAndEstimatedCost(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("scope") Long scopeUserId);
+    @Query("SELECT COALESCE(SUM(i.amount), 0), 0 FROM SalesOrderItem i JOIN i.salesOrder o WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status = 'COMPLETED'")
+    Object[] sumRevenueAndEstimatedCost(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
     @Query(value = "SELECT COALESCE(c.name, '未分类'), COALESCE(SUM(i.amount), 0) "
             + "FROM sales_order_items i "
@@ -27,12 +27,11 @@ public interface SalesOrderItemRepository extends JpaRepository<SalesOrderItem, 
             + "INNER JOIN products p ON i.product_id = p.id "
             + "LEFT JOIN categories c ON p.category_id = c.id "
             + "WHERE o.order_date >= :start AND o.order_date <= :end "
-            + "AND o.status IN ('SHIPPED', 'DELIVERED', 'COMPLETED') "
-            + "AND (:scope IS NULL OR o.salesman_id = :scope) "
+            + "AND o.status = 'COMPLETED' "
             + "GROUP BY COALESCE(c.id, -1), COALESCE(c.name, '未分类')",
             nativeQuery = true)
-    List<Object[]> sumSalesByCategory(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("scope") Long scopeUserId);
+    List<Object[]> sumSalesByCategory(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
-    @Query("SELECT o.customer.id, o.customer.name, COUNT(DISTINCT o.id), COALESCE(SUM(i.amount), 0), 0 FROM SalesOrderItem i JOIN i.salesOrder o WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status IN ('SHIPPED', 'DELIVERED', 'COMPLETED') AND (:scope IS NULL OR o.salesman.id = :scope) GROUP BY o.customer.id, o.customer.name ORDER BY SUM(i.amount) DESC")
-    List<Object[]> customerValueStats(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("scope") Long scopeUserId);
+    @Query("SELECT o.customer.id, o.customer.name, COUNT(DISTINCT o.id), COALESCE(SUM(i.amount), 0), 0 FROM SalesOrderItem i JOIN i.salesOrder o WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status = 'COMPLETED' GROUP BY o.customer.id, o.customer.name ORDER BY SUM(i.amount) DESC")
+    List<Object[]> customerValueStats(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }

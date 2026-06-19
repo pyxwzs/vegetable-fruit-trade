@@ -53,7 +53,7 @@ public class SupplierService {
             throw new BusinessException("供应商编码已存在");
         }
         Supplier s = new Supplier();
-        fillFromDto(s, dto, true);
+        fillFromDto(s, dto);
         return supplierRepository.save(s);
     }
 
@@ -64,7 +64,7 @@ public class SupplierService {
                 && supplierRepository.existsBySupplierCode(dto.getSupplierCode().trim())) {
             throw new BusinessException("供应商编码已存在");
         }
-        fillFromDto(s, dto, false);
+        fillFromDto(s, dto);
         return supplierRepository.save(s);
     }
 
@@ -79,31 +79,22 @@ public class SupplierService {
         supplierRepository.deleteById(id);
     }
 
-    private void fillFromDto(Supplier s, SupplierDTO dto, boolean creating) {
+    private void fillFromDto(Supplier s, SupplierDTO dto) {
         s.setSupplierCode(dto.getSupplierCode().trim());
         s.setName(dto.getName().trim());
         s.setContact(emptyToNull(dto.getContact()));
         s.setPhone(emptyToNull(dto.getPhone()));
-        s.setEmail(emptyToNull(dto.getEmail()));
         s.setAddress(emptyToNull(dto.getAddress()));
-        s.setTaxNumber(emptyToNull(dto.getTaxNumber()));
-        s.setBankName(emptyToNull(dto.getBankName()));
-        s.setBankAccount(emptyToNull(dto.getBankAccount()));
-        s.setCreditRating(dto.getCreditRating());
-        s.setDeliveryOnTimeRate(dto.getDeliveryOnTimeRate());
-        s.setQualityPassRate(dto.getQualityPassRate());
         s.setRemark(emptyToNull(dto.getRemark()));
         if (dto.getStatus() != null && !dto.getStatus().isBlank()) {
             s.setStatus(Supplier.SupplierStatus.valueOf(dto.getStatus().trim().toUpperCase()));
-        } else if (creating) {
+        } else if (s.getId() == null) {
             s.setStatus(Supplier.SupplierStatus.ACTIVE);
         }
     }
 
     private static String emptyToNull(String v) {
-        if (v == null) {
-            return null;
-        }
+        if (v == null) return null;
         String t = v.trim();
         return t.isEmpty() ? null : t;
     }

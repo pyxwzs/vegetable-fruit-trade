@@ -1,6 +1,5 @@
 package com.trade.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,6 +15,7 @@ import java.util.List;
 @Entity
 @Table(name = "sales_orders")
 public class SalesOrder {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,23 +27,13 @@ public class SalesOrder {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @ManyToOne
-    @JoinColumn(name = "salesman_id")
-    @JsonIgnoreProperties({"password"})
-    private User salesman; // 销售员
-
     private LocalDate orderDate;
-
-    private LocalDate deliveryDate;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal receivedAmount = BigDecimal.ZERO;
-
-    @Column(precision = 10, scale = 2)
-    private BigDecimal discountAmount = BigDecimal.ZERO;
 
     @Column(length = 20)
     private String paymentMethod;
@@ -66,7 +56,7 @@ public class SalesOrder {
     private LocalDateTime updateTime;
 
     public enum OrderStatus {
-        PENDING, APPROVED, SHIPPED, DELIVERED, COMPLETED, CANCELLED
+        PENDING, COMPLETED, CANCELLED
     }
 
     public enum PaymentStatus {

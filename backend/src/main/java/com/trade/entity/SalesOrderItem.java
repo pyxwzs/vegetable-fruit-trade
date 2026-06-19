@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "sales_order_items")
 public class SalesOrderItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,9 +26,6 @@ public class SalesOrderItem {
 
     @Column(precision = 10, scale = 3)
     private BigDecimal quantity;
-
-    @Column(precision = 10, scale = 3)
-    private BigDecimal returnedQuantity = BigDecimal.ZERO;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal price;

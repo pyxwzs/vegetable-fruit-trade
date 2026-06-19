@@ -1,6 +1,5 @@
 package com.trade.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,45 +15,34 @@ import java.util.List;
 @Entity
 @Table(name = "purchase_orders")
 public class PurchaseOrder {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false, length = 50)
-    private String orderNo; // 订单号
+    private String orderNo;
 
     @ManyToOne
     @JoinColumn(name = "supplier_id", nullable = false)
     private Supplier supplier;
 
-    @ManyToOne
-    @JoinColumn(name = "purchaser_id")
-    @JsonIgnoreProperties({"password"})
-    private User purchaser; // 采购员
-
-    private LocalDate orderDate; // 下单日期
-
-    private LocalDate expectedDeliveryDate; // 预计交货日期
-
-    private LocalDate deliveryDate; // 实际交货日期
+    private LocalDate orderDate;
 
     @Column(precision = 10, scale = 2)
-    private BigDecimal totalAmount = BigDecimal.ZERO; // 总金额
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column(precision = 10, scale = 2)
-    private BigDecimal paidAmount = BigDecimal.ZERO; // 已付金额
-
-    @Column(precision = 10, scale = 2)
-    private BigDecimal discountAmount = BigDecimal.ZERO; // 折扣金额
+    private BigDecimal paidAmount = BigDecimal.ZERO;
 
     @Column(length = 20)
-    private String paymentMethod; // 支付方式
+    private String paymentMethod;
 
     @Enumerated(EnumType.STRING)
-    private PaymentStatus paymentStatus = PaymentStatus.UNPAID; // 支付状态
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
     @Enumerated(EnumType.STRING)
-    private OrderStatus status = OrderStatus.PENDING; // 订单状态
+    private OrderStatus status = OrderStatus.PENDING;
 
     private String remark;
 
@@ -68,7 +56,7 @@ public class PurchaseOrder {
     private LocalDateTime updateTime;
 
     public enum OrderStatus {
-        PENDING, APPROVED, SHIPPED, RECEIVED, COMPLETED, CANCELLED
+        PENDING, COMPLETED, CANCELLED
     }
 
     public enum PaymentStatus {
