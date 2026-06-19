@@ -167,25 +167,19 @@ public class AnalyticsService {
         List<CustomerValueRowDTO> out = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             Object[] row = rows.get(i);
-            BigDecimal rev = toBigDecimal(row.length > 4 ? row[4] : null);
-            BigDecimal cost = toBigDecimal(row.length > 5 ? row[5] : null);
+            // row: [customerId, customerName, orderCount, revenue, estimatedCost]
+            BigDecimal rev = toBigDecimal(row.length > 3 ? row[3] : null);
+            BigDecimal cost = toBigDecimal(row.length > 4 ? row[4] : null);
             BigDecimal gp = rev.subtract(cost);
             BigDecimal margin = rev.compareTo(BigDecimal.ZERO) > 0
                     ? gp.divide(rev, 4, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
-            Object clObj = row[2];
-            String creditStr = "";
-            if (clObj instanceof Customer.CreditLevel) {
-                creditStr = ((Customer.CreditLevel) clObj).name();
-            } else if (clObj != null) {
-                creditStr = clObj.toString();
-            }
             out.add(new CustomerValueRowDTO(
                     i + 1,
                     toLong(row[0]),
                     row[1] != null ? row[1].toString() : "",
-                    creditStr,
-                    row[3] instanceof Number ? ((Number) row[3]).longValue() : 0L,
+                    "",
+                    row[2] instanceof Number ? ((Number) row[2]).longValue() : 0L,
                     rev,
                     cost,
                     gp,

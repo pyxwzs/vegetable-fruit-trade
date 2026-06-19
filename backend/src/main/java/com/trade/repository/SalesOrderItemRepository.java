@@ -33,6 +33,6 @@ public interface SalesOrderItemRepository extends JpaRepository<SalesOrderItem, 
             nativeQuery = true)
     List<Object[]> sumSalesByCategory(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("scope") Long scopeUserId);
 
-    @Query("SELECT o.customer.id, o.customer.name, o.customer.creditLevel, COUNT(DISTINCT o.id), COALESCE(SUM(i.amount), 0), COALESCE(SUM(i.quantity * COALESCE(p.purchasePrice, 0)), 0) FROM SalesOrderItem i JOIN i.salesOrder o JOIN i.product p WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status IN ('SHIPPED', 'DELIVERED', 'COMPLETED') AND (:scope IS NULL OR o.salesman.id = :scope) GROUP BY o.customer.id, o.customer.name, o.customer.creditLevel ORDER BY SUM(i.amount) DESC")
+    @Query("SELECT o.customer.id, o.customer.name, COUNT(DISTINCT o.id), COALESCE(SUM(i.amount), 0), COALESCE(SUM(i.quantity * COALESCE(p.purchasePrice, 0)), 0) FROM SalesOrderItem i JOIN i.salesOrder o JOIN i.product p WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status IN ('SHIPPED', 'DELIVERED', 'COMPLETED') AND (:scope IS NULL OR o.salesman.id = :scope) GROUP BY o.customer.id, o.customer.name ORDER BY SUM(i.amount) DESC")
     List<Object[]> customerValueStats(@Param("start") LocalDate start, @Param("end") LocalDate end, @Param("scope") Long scopeUserId);
 }
