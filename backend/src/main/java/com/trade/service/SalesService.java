@@ -37,11 +37,7 @@ public class SalesService {
                 .orElseThrow(() -> new BusinessException("客户不存在"));
 
         if (customer.getStatus() != Customer.CustomerStatus.ACTIVE) {
-            throw new BusinessException("客户已停用或冻结，无法下单");
-        }
-
-        if (customer.getCreditLevel() == Customer.CreditLevel.D) {
-            throw new BusinessException("客户信用等级不足，无法下单");
+            throw new BusinessException("客户已停用，无法下单");
         }
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -50,14 +46,6 @@ public class SalesService {
                     .orElseThrow(() -> new BusinessException("商品不存在: " + itemDTO.getProductId()));
             BigDecimal amount = itemDTO.getPrice().multiply(itemDTO.getQuantity());
             totalAmount = totalAmount.add(amount);
-        }
-
-        BigDecimal creditLimit = customer.getCreditLimit() != null ? customer.getCreditLimit() : BigDecimal.ZERO;
-        if (creditLimit.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal exposure = salesOrderRepository.sumUnpaidExposure(customer.getId());
-            if (exposure.add(totalAmount).compareTo(creditLimit) > 0) {
-                throw new BusinessException("超出客户授信额度（未结清占用 + 本单金额 > 额度）");
-            }
         }
 
         User salesman = userService.getCurrentUser();

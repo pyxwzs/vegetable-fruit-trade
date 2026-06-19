@@ -134,7 +134,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
-import { ShoppingCart, Money, Goods, User, WarningFilled, Clock } from '@element-plus/icons-vue'
+import { ShoppingCart, Money, Goods, User } from '@element-plus/icons-vue'
 import { getExpiringProducts, getLowStockProducts } from '@/api/inventory'
 import { getPurchaseOrders } from '@/api/purchase'
 import { getSalesOrders } from '@/api/sales'
