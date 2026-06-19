@@ -1,9 +1,6 @@
 package com.trade.controller;
 
-import com.trade.dto.OrderPaymentDTO;
-import com.trade.dto.PurchaseOrderDTO;
-import com.trade.dto.PurchaseReturnDTO;
-import com.trade.dto.ReturnRequestDTO;
+import com.trade.dto.*;
 import com.trade.entity.PurchaseOrder;
 import com.trade.service.PurchaseService;
 import com.trade.service.ReturnRequestService;
@@ -15,7 +12,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.validation.Valid;
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/purchase")
@@ -29,8 +30,11 @@ public class PurchaseController {
     public ApiResponse<Page<PurchaseOrder>> getPurchaseOrders(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) PurchaseOrder.OrderStatus status,
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResponse.success(purchaseService.getPurchaseOrders(keyword, status, pageable));
+        return ApiResponse.success(purchaseService.getPurchaseOrders(keyword, status, paymentStatus, startDate, endDate, pageable));
     }
 
     @GetMapping("/{id}")
@@ -63,7 +67,17 @@ public class PurchaseController {
 
     @PostMapping("/{id}/pay")
     public ApiResponse<PurchaseOrder> recordPayment(
-            @PathVariable Long id, @Valid @RequestBody OrderPaymentDTO dto) {
-        return ApiResponse.success(purchaseService.recordPayment(id, dto.getAmount()));
+            @PathVariable Long id, @RequestBody AddPaymentDTO dto) {
+        return ApiResponse.success(purchaseService.recordPayment(id, dto));
+    }
+
+    @GetMapping("/{id}/payments")
+    public ApiResponse<List<PaymentRecordDTO>> getPayments(@PathVariable Long id) {
+        return ApiResponse.success(purchaseService.getPaymentHistory(id));
+    }
+
+    @GetMapping("/pending-stats")
+    public ApiResponse<java.util.Map<String, Object>> pendingStats() {
+        return ApiResponse.success(purchaseService.getPendingStats());
     }
 }

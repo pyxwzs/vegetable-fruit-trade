@@ -23,3 +23,11 @@ export function cancelPurchaseOrder(id) {
 export function payPurchaseOrder(id, data) {
   return request({ url: `/purchase/${id}/pay`, method: 'post', data })
 }
+
+export function getPurchasePayments(id) {
+  return request({ url: `/purchase/${id}/payments`, method: 'get' })
+}
+
+export function getPurchasePendingStats() {
+  return request({ url: '/purchase/pending-stats', method: 'get' })
+}

@@ -1,65 +1,7 @@
 import request from './request'
 
-export function getDailyReport(date) {
-  return request({
-    url: '/analytics/daily-report',
-    method: 'get',
-    params: date ? { date } : {}
-  })
-}
-
 export function getHomeSummary() {
-  return request({
-    url: '/analytics/home-summary',
-    method: 'get'
-  })
-}
-
-export function getOverviewKpi(range) {
-  return request({
-    url: '/analytics/overview-kpi',
-    method: 'get',
-    params: { range }
-  })
-}
-
-export function getSalesTrend(range) {
-  return request({
-    url: '/analytics/sales-trend',
-    method: 'get',
-    params: { range }
-  })
-}
-
-export function getProductRanking(range, limit = 10) {
-  return request({
-    url: '/analytics/product-ranking',
-    method: 'get',
-    params: { range, limit }
-  })
-}
-
-export function getProfitSummary(range) {
-  return request({
-    url: '/analytics/profit-summary',
-    method: 'get',
-    params: { range }
-  })
-}
-
-export function getReplenishment() {
-  return request({
-    url: '/analytics/replenishment',
-    method: 'get'
-  })
-}
-
-export function getCustomerRanking(range, limit = 20) {
-  return request({
-    url: '/analytics/customer-ranking',
-    method: 'get',
-    params: { range, limit }
-  })
+  return request({ url: '/analytics/home-summary', method: 'get' })
 }
 
 export function getMonthlyPurchase(params) {
@@ -68,4 +10,36 @@ export function getMonthlyPurchase(params) {
 
 export function getMonthlySales(params) {
   return request({ url: '/analytics/monthly-sales', method: 'get', params })
+}
+
+export function getDailyPurchaseDetail(params) {
+  return request({ url: '/analytics/daily-purchase', method: 'get', params })
+}
+
+export function getDailySalesDetail(params) {
+  return request({ url: '/analytics/daily-sales', method: 'get', params })
+}
+
+export function getPurchaseItems(params) {
+  return request({ url: '/analytics/purchase-items', method: 'get', params })
+}
+
+export function getSalesItems(params) {
+  return request({ url: '/analytics/sales-items', method: 'get', params })
+}
+
+export function getMonthlyOverview(params) {
+  return request({ url: '/analytics/monthly-overview', method: 'get', params })
+}
+
+export function getYearlyBalance(params) {
+  return request({ url: '/analytics/yearly-balance', method: 'get', params })
+}
+
+export function getPurchasePartners(params) {
+  return request({ url: '/analytics/purchase-partners', method: 'get', params })
+}
+
+export function getSalesPartners(params) {
+  return request({ url: '/analytics/sales-partners', method: 'get', params })
 }

@@ -14,6 +14,4 @@ public class StocktakeRequestDTO {
     @NotNull(message = "实盘数量不能为空")
     @DecimalMin(value = "0", inclusive = true, message = "实盘数量不能为负")
     private BigDecimal actualQuantity;
-
-    private String remark;
 }

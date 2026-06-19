@@ -49,10 +49,8 @@ public class SupplierService {
 
     @Transactional
     public Supplier create(SupplierDTO dto) {
-        if (supplierRepository.existsBySupplierCode(dto.getSupplierCode().trim())) {
-            throw new BusinessException("供应商编码已存在");
-        }
         Supplier s = new Supplier();
+        s.setSupplierCode("SUP" + System.currentTimeMillis());
         fillFromDto(s, dto);
         return supplierRepository.save(s);
     }
@@ -60,10 +58,6 @@ public class SupplierService {
     @Transactional
     public Supplier update(Long id, SupplierDTO dto) {
         Supplier s = getById(id);
-        if (!s.getSupplierCode().equals(dto.getSupplierCode().trim())
-                && supplierRepository.existsBySupplierCode(dto.getSupplierCode().trim())) {
-            throw new BusinessException("供应商编码已存在");
-        }
         fillFromDto(s, dto);
         return supplierRepository.save(s);
     }
@@ -80,12 +74,10 @@ public class SupplierService {
     }
 
     private void fillFromDto(Supplier s, SupplierDTO dto) {
-        s.setSupplierCode(dto.getSupplierCode().trim());
         s.setName(dto.getName().trim());
         s.setContact(emptyToNull(dto.getContact()));
         s.setPhone(emptyToNull(dto.getPhone()));
         s.setAddress(emptyToNull(dto.getAddress()));
-        s.setRemark(emptyToNull(dto.getRemark()));
         if (dto.getStatus() != null && !dto.getStatus().isBlank()) {
             s.setStatus(Supplier.SupplierStatus.valueOf(dto.getStatus().trim().toUpperCase()));
         } else if (s.getId() == null) {

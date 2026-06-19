@@ -21,8 +21,6 @@ public class PurchaseReceiveDTO {
     @Valid
     private List<ReceiveItem> items;
 
-    private String remark;
-
     @Data
     public static class ReceiveItem {
 

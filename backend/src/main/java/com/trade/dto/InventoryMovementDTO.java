@@ -18,6 +18,4 @@ public class InventoryMovementDTO {
     @NotNull(message = "数量不能为空")
     @Positive(message = "数量必须为正数")
     private BigDecimal quantity;
-
-    private String remark;
 }

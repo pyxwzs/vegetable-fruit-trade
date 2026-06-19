@@ -11,10 +11,6 @@ public class CustomerDTO {
 
     private Long id;
 
-    @NotBlank(message = "客户编码不能为空")
-    @Size(max = 50)
-    private String customerCode;
-
     @NotBlank(message = "客户名称不能为空")
     @Size(max = 100)
     private String name;
@@ -27,9 +23,6 @@ public class CustomerDTO {
 
     @Size(max = 200)
     private String address;
-
-    @Size(max = 500)
-    private String remark;
 
     private String status;
 

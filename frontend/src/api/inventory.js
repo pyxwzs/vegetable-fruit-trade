@@ -4,6 +4,10 @@ export function getInventories(params) {
   return request({ url: '/inventory', method: 'get', params })
 }
 
+export function getInventoryOverview() {
+  return request({ url: '/inventory/overview', method: 'get' })
+}
+
 export function inbound(data) {
   return request({ url: '/inventory/inbound', method: 'post', data })
 }

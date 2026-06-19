@@ -31,8 +31,6 @@ public class Customer {
     @Column(length = 200)
     private String address;
 
-    private String remark;
-
     @Enumerated(EnumType.STRING)
     private CustomerStatus status = CustomerStatus.ACTIVE;
 

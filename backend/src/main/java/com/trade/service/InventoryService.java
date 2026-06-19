@@ -1,12 +1,15 @@
 package com.trade.service;
 
 import com.trade.dto.InventoryMovementDTO;
+import com.trade.dto.InventoryOverviewDTO;
 import com.trade.entity.Inventory;
 import com.trade.entity.Product;
+import com.trade.entity.PurchaseOrder;
 import com.trade.entity.Warehouse;
 import com.trade.exception.BusinessException;
 import com.trade.repository.InventoryRepository;
 import com.trade.repository.ProductRepository;
+import com.trade.repository.PurchaseOrderItemRepository;
 import com.trade.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,8 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +34,7 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
     private final WarehouseRepository warehouseRepository;
+    private final PurchaseOrderItemRepository purchaseOrderItemRepository;
 
     @Transactional
     public Inventory addStock(InventoryMovementDTO dto) {
@@ -46,9 +53,6 @@ public class InventoryService {
             inv.setQuantity(dto.getQuantity());
         } else {
             inv.setQuantity(inv.getQuantity().add(dto.getQuantity()));
-        }
-        if (dto.getRemark() != null && !dto.getRemark().isBlank()) {
-            inv.setRemark(dto.getRemark());
         }
         return inventoryRepository.save(inv);
     }
@@ -104,5 +108,53 @@ public class InventoryService {
             return cb.and(ps.toArray(new Predicate[0]));
         };
         return inventoryRepository.findAll(spec, pageable);
+    }
+
+    public InventoryOverviewDTO getOverview() {
+        Map<Long, BigDecimal> latestPrice = loadLatestPurchasePriceByProduct();
+
+        List<Inventory> inventories = inventoryRepository.findAll().stream()
+                .filter(i -> i.getQuantity() != null && i.getQuantity().compareTo(BigDecimal.ZERO) > 0)
+                .toList();
+
+        InventoryOverviewDTO overview = new InventoryOverviewDTO();
+        overview.setSkuCount(inventories.size());
+
+        BigDecimal totalValue = BigDecimal.ZERO;
+        List<InventoryOverviewDTO.Item> items = new ArrayList<>();
+
+        for (Inventory inv : inventories) {
+            Product product = inv.getProduct();
+            BigDecimal qty = inv.getQuantity();
+            BigDecimal unitCost = latestPrice.getOrDefault(product.getId(), BigDecimal.ZERO);
+            BigDecimal value = qty.multiply(unitCost).setScale(2, RoundingMode.HALF_UP);
+            totalValue = totalValue.add(value);
+
+            InventoryOverviewDTO.Item item = new InventoryOverviewDTO.Item();
+            item.setProductId(product.getId());
+            item.setProductName(product.getName());
+            item.setCategory(product.getCategory());
+            item.setUnit(product.getUnit());
+            item.setQuantity(qty);
+            item.setUnitCost(unitCost);
+            item.setValue(value);
+            items.add(item);
+        }
+
+        overview.setTotalValue(totalValue);
+        overview.setItems(items);
+        return overview;
+    }
+
+    private Map<Long, BigDecimal> loadLatestPurchasePriceByProduct() {
+        List<com.trade.entity.PurchaseOrderItem> rows = purchaseOrderItemRepository
+                .findByPurchaseOrder_StatusNotOrderByPurchaseOrder_OrderDateDescIdDesc(
+                        PurchaseOrder.OrderStatus.CANCELLED);
+
+        Map<Long, BigDecimal> map = new HashMap<>();
+        for (com.trade.entity.PurchaseOrderItem row : rows) {
+            map.putIfAbsent(row.getProduct().getId(), row.getPrice());
+        }
+        return map;
     }
 }

@@ -28,8 +28,6 @@ public class Inventory {
     @Column(precision = 10, scale = 3)
     private BigDecimal quantity = BigDecimal.ZERO;
 
-    private String remark;
-
     @CreationTimestamp
     private LocalDateTime createTime;
 

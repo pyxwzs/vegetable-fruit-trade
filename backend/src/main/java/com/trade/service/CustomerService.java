@@ -47,10 +47,8 @@ public class CustomerService {
 
     @Transactional
     public Customer create(CustomerDTO dto) {
-        if (customerRepository.existsByCustomerCode(dto.getCustomerCode().trim())) {
-            throw new BusinessException("客户编码已存在");
-        }
         Customer c = new Customer();
+        c.setCustomerCode("CST" + System.currentTimeMillis());
         fillFromDto(c, dto);
         return customerRepository.save(c);
     }
@@ -58,10 +56,6 @@ public class CustomerService {
     @Transactional
     public Customer update(Long id, CustomerDTO dto) {
         Customer c = getById(id);
-        if (!c.getCustomerCode().equals(dto.getCustomerCode().trim())
-                && customerRepository.existsByCustomerCode(dto.getCustomerCode().trim())) {
-            throw new BusinessException("客户编码已存在");
-        }
         fillFromDto(c, dto);
         return customerRepository.save(c);
     }
@@ -78,12 +72,10 @@ public class CustomerService {
     }
 
     private void fillFromDto(Customer c, CustomerDTO dto) {
-        c.setCustomerCode(dto.getCustomerCode().trim());
         c.setName(dto.getName().trim());
         c.setContact(emptyToNull(dto.getContact()));
         c.setPhone(emptyToNull(dto.getPhone()));
         c.setAddress(emptyToNull(dto.getAddress()));
-        c.setRemark(emptyToNull(dto.getRemark()));
         if (dto.getStatus() != null && !dto.getStatus().isBlank()) {
             c.setStatus(Customer.CustomerStatus.valueOf(dto.getStatus().trim().toUpperCase()));
         } else if (c.getId() == null) {

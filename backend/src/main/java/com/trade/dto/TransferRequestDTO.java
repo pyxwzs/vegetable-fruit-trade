@@ -17,6 +17,4 @@ public class TransferRequestDTO {
     @NotNull(message = "调拨数量不能为空")
     @Positive(message = "调拨数量必须大于 0")
     private BigDecimal quantity;
-
-    private String remark;
 }

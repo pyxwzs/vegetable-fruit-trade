@@ -18,6 +18,4 @@ public class PurchaseOrderItemDTO {
     @NotNull(message = "单价不能为空")
     @Positive(message = "单价必须为正数")
     private BigDecimal price;
-
-    private String remark;
 }

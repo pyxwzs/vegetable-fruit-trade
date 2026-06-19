@@ -21,22 +21,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+// repositories injected via @RequiredArgsConstructor
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AnalyticsService {
 
-    private static final BigDecimal REPLENISH_TARGET = new BigDecimal("30");
-    private static final BigDecimal LOW_STOCK_THRESHOLD = new BigDecimal("10");
-
     private final SalesOrderRepository salesOrderRepository;
     private final SalesOrderItemRepository salesOrderItemRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
+    private final PurchaseOrderItemRepository purchaseOrderItemRepository;
+    private final PurchasePaymentRepository purchasePaymentRepository;
+    private final SalePaymentRepository salePaymentRepository;
     private final CustomerRepository customerRepository;
+    private final ExpenseRepository expenseRepository;
     private final SupplierRepository supplierRepository;
     private final InventoryRepository inventoryRepository;
     private final InventoryService inventoryService;
-    private final CustomerService customerService;
 
     public DailyReportDTO getDailyReport(LocalDate date) {
         LocalDate d = date != null ? date : LocalDate.now();
@@ -59,129 +61,6 @@ public class AnalyticsService {
         return new HomeSummaryDTO(daily, trend, sku, activeCust);
     }
 
-    public AnalyticsKpiDTO getOverviewKpi(String rangeType) {
-        LocalDate[] cur = resolveRange(rangeType);
-        LocalDate[] prev = previousRange(cur[0], cur[1]);
-        BigDecimal salesCur = salesOrderRepository.sumRealizedSalesBetween(cur[0], cur[1]);
-        BigDecimal salesPrev = salesOrderRepository.sumRealizedSalesBetween(prev[0], prev[1]);
-
-        Object[] profitCur = salesOrderItemRepository.sumRevenueAndEstimatedCost(cur[0], cur[1]);
-        Object[] profitPrev = salesOrderItemRepository.sumRevenueAndEstimatedCost(prev[0], prev[1]);
-        BigDecimal gpCur = grossProfitFromRow(profitCur);
-        BigDecimal gpPrev = grossProfitFromRow(profitPrev);
-
-        long ordCur = salesOrderRepository.countOrdersBetween(cur[0], cur[1]);
-        long ordPrev = salesOrderRepository.countOrdersBetween(prev[0], prev[1]);
-
-        long custCur = salesOrderRepository.countDistinctCustomersWithOrders(cur[0], cur[1]);
-        long custPrev = salesOrderRepository.countDistinctCustomersWithOrders(prev[0], prev[1]);
-
-        return new AnalyticsKpiDTO(
-                salesCur,
-                trendPercent(salesCur, salesPrev),
-                gpCur,
-                trendPercent(gpCur, gpPrev),
-                ordCur,
-                trendPercent(BigDecimal.valueOf(ordCur), BigDecimal.valueOf(ordPrev)),
-                custCur,
-                trendPercent(BigDecimal.valueOf(custCur), BigDecimal.valueOf(custPrev))
-        );
-    }
-
-    public List<SalesTrendPointDTO> getSalesTrend(String rangeType) {
-        LocalDate[] r = resolveRange(rangeType);
-        List<Object[]> rows = salesOrderRepository.sumRealizedSalesByDay(r[0], r[1]);
-        return buildFilledTrend(r[0], r[1], rows);
-    }
-
-    public List<ProductSalesRankDTO> getProductRanking(String rangeType, int limit) {
-        LocalDate[] r = resolveRange(rangeType);
-        List<Object[]> rows = salesOrderItemRepository.sumSalesByProduct(r[0], r[1]);
-        int n = Math.min(limit > 0 ? limit : 10, rows.size());
-        List<ProductSalesRankDTO> out = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            Object[] row = rows.get(i);
-            out.add(new ProductSalesRankDTO(
-                    toLong(row[0]),
-                    row[1] != null ? row[1].toString() : "",
-                    toBigDecimal(row[2])));
-        }
-        return out;
-    }
-
-    public ProfitSummaryDTO getProfitSummary(String rangeType) {
-        LocalDate[] r = resolveRange(rangeType);
-        Object[] rc = salesOrderItemRepository.sumRevenueAndEstimatedCost(r[0], r[1]);
-        BigDecimal revenue = toBigDecimal(rc != null && rc.length > 0 ? rc[0] : null);
-        BigDecimal cost = toBigDecimal(rc != null && rc.length > 1 ? rc[1] : null);
-        BigDecimal profit = revenue.subtract(cost);
-        BigDecimal margin = revenue.compareTo(BigDecimal.ZERO) > 0
-                ? profit.divide(revenue, 4, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO;
-
-        List<Object[]> catRows = salesOrderItemRepository.sumSalesByCategory(r[0], r[1]);
-        List<ProfitSummaryDTO.CategorySalesDTO> cats = new ArrayList<>();
-        for (Object[] row : catRows) {
-            String name = row[0] != null ? row[0].toString() : "未分类";
-            cats.add(new ProfitSummaryDTO.CategorySalesDTO(name, toBigDecimal(row.length > 1 ? row[1] : null)));
-        }
-
-        ProfitSummaryDTO dto = new ProfitSummaryDTO();
-        dto.setRevenue(revenue);
-        dto.setEstimatedCost(cost);
-        dto.setGrossProfit(profit);
-        dto.setGrossMargin(margin);
-        dto.setSalesByCategory(cats);
-        return dto;
-    }
-
-    public List<ReplenishmentSuggestionDTO> getReplenishmentSuggestions() {
-        List<Object[]> rows = inventoryRepository.findLowStockByProduct(LOW_STOCK_THRESHOLD);
-        List<ReplenishmentSuggestionDTO> out = new ArrayList<>();
-        for (Object[] row : rows) {
-            BigDecimal avail = toBigDecimal(row.length > 3 ? row[3] : null);
-            BigDecimal suggest = REPLENISH_TARGET.subtract(avail).max(BigDecimal.ZERO).setScale(3, RoundingMode.HALF_UP);
-            out.add(new ReplenishmentSuggestionDTO(
-                    toLong(row[0]),
-                    row[1] != null ? row[1].toString() : "",
-                    row[2] != null ? row[2].toString() : "",
-                    avail,
-                    suggest
-            ));
-        }
-        out.sort(Comparator.comparing(ReplenishmentSuggestionDTO::getCurrentAvailableTotal));
-        return out;
-    }
-
-    public List<CustomerValueRowDTO> getCustomerRanking(String rangeType, int limit) {
-        LocalDate[] r = resolveRange(rangeType);
-        List<Object[]> rows = salesOrderItemRepository.customerValueStats(r[0], r[1]);
-        int n = Math.min(limit > 0 ? limit : 20, rows.size());
-        List<CustomerValueRowDTO> out = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            Object[] row = rows.get(i);
-            // row: [customerId, customerName, orderCount, revenue, estimatedCost]
-            BigDecimal rev = toBigDecimal(row.length > 3 ? row[3] : null);
-            BigDecimal cost = toBigDecimal(row.length > 4 ? row[4] : null);
-            BigDecimal gp = rev.subtract(cost);
-            BigDecimal margin = rev.compareTo(BigDecimal.ZERO) > 0
-                    ? gp.divide(rev, 4, RoundingMode.HALF_UP)
-                    : BigDecimal.ZERO;
-            out.add(new CustomerValueRowDTO(
-                    i + 1,
-                    toLong(row[0]),
-                    row[1] != null ? row[1].toString() : "",
-                    "",
-                    row[2] instanceof Number ? ((Number) row[2]).longValue() : 0L,
-                    rev,
-                    cost,
-                    gp,
-                    margin
-            ));
-        }
-        return out;
-    }
-
     public MonthlyReportDTO getMonthlyPurchaseBySupplier(Long supplierId, int year) {
         List<Object[]> rows = supplierId != null
                 ? purchaseOrderRepository.monthlyStatsBySupplier(supplierId, year)
@@ -202,6 +81,239 @@ public class AnalyticsService {
             name = customerRepository.findById(customerId).map(Customer::getName).orElse("未知");
         }
         return buildMonthlyReport(customerId, name, year, rows);
+    }
+
+    public MonthlyOverviewDTO getMonthlyOverview(int year, int month) {
+        BigDecimal purchaseTotal = nvl(purchaseOrderRepository.sumCompletedByMonth(year, month));
+        BigDecimal salesTotal = nvl(salesOrderRepository.sumCompletedByMonth(year, month));
+        BigDecimal paidToFarmers = nvl(purchasePaymentRepository.sumByMonth(year, month));
+        BigDecimal collectedFromCustomers = nvl(salePaymentRepository.sumByMonth(year, month));
+        BigDecimal otherExpenses = nvl(expenseRepository.sumByMonth(year, month));
+        BigDecimal unpaidToFarmers = purchaseTotal.subtract(paidToFarmers).max(BigDecimal.ZERO);
+        BigDecimal uncollectedFromCustomers = salesTotal.subtract(collectedFromCustomers).max(BigDecimal.ZERO);
+        BigDecimal grossProfit = salesTotal.subtract(purchaseTotal);
+        BigDecimal netProfit = grossProfit.subtract(otherExpenses);
+        BigDecimal cashDifference = collectedFromCustomers.subtract(paidToFarmers);
+
+        List<MonthlyOverviewDTO.BalanceRowDTO> farmerRanking = new ArrayList<>();
+        for (Object[] r : purchaseOrderRepository.farmerBalanceRanking(year, month)) {
+            MonthlyOverviewDTO.BalanceRowDTO row = new MonthlyOverviewDTO.BalanceRowDTO();
+            row.setName(r[0] != null ? r[0].toString() : "");
+            row.setTotal(toBigDecimal(r[1]));
+            row.setSettled(toBigDecimal(r[2]));
+            row.setUnpaid(toBigDecimal(r[1]).subtract(toBigDecimal(r[2])).max(BigDecimal.ZERO));
+            farmerRanking.add(row);
+        }
+
+        List<MonthlyOverviewDTO.BalanceRowDTO> customerRanking = new ArrayList<>();
+        for (Object[] r : salesOrderRepository.customerBalanceRanking(year, month)) {
+            MonthlyOverviewDTO.BalanceRowDTO row = new MonthlyOverviewDTO.BalanceRowDTO();
+            row.setName(r[0] != null ? r[0].toString() : "");
+            row.setTotal(toBigDecimal(r[1]));
+            row.setSettled(toBigDecimal(r[2]));
+            row.setUnpaid(toBigDecimal(r[1]).subtract(toBigDecimal(r[2])).max(BigDecimal.ZERO));
+            customerRanking.add(row);
+        }
+
+        // 商品毛利排行（将采购/销售金额按商品名合并）
+        Map<String, BigDecimal> purchaseMap = new java.util.LinkedHashMap<>();
+        Map<String, String> unitMap = new java.util.LinkedHashMap<>();
+        for (Object[] r : purchaseOrderRepository.productPurchaseSumByMonth(year, month)) {
+            String name = r[0] != null ? r[0].toString() : "";
+            unitMap.put(name, r[1] != null ? r[1].toString() : "");
+            purchaseMap.put(name, toBigDecimal(r[2]));
+        }
+        Map<String, BigDecimal> salesMap = new java.util.LinkedHashMap<>();
+        for (Object[] r : salesOrderRepository.productSalesSumByMonth(year, month)) {
+            String name = r[0] != null ? r[0].toString() : "";
+            if (!unitMap.containsKey(name)) unitMap.put(name, r[1] != null ? r[1].toString() : "");
+            salesMap.put(name, toBigDecimal(r[2]));
+        }
+        Set<String> allProducts = new java.util.LinkedHashSet<>();
+        allProducts.addAll(purchaseMap.keySet());
+        allProducts.addAll(salesMap.keySet());
+        List<MonthlyOverviewDTO.ProductGrossDTO> productRanking = new ArrayList<>();
+        for (String pName : allProducts) {
+            BigDecimal pa = purchaseMap.getOrDefault(pName, BigDecimal.ZERO);
+            BigDecimal sa = salesMap.getOrDefault(pName, BigDecimal.ZERO);
+            BigDecimal gp = sa.subtract(pa);
+            String margin = pa.compareTo(BigDecimal.ZERO) > 0
+                    ? gp.multiply(new BigDecimal("100")).divide(pa, 1, java.math.RoundingMode.HALF_UP) + "%"
+                    : "-";
+            MonthlyOverviewDTO.ProductGrossDTO dto = new MonthlyOverviewDTO.ProductGrossDTO();
+            dto.setProductName(pName);
+            dto.setUnit(unitMap.getOrDefault(pName, ""));
+            dto.setPurchaseAmount(pa);
+            dto.setSalesAmount(sa);
+            dto.setGrossProfit(gp);
+            dto.setGrossMargin(margin);
+            productRanking.add(dto);
+        }
+        productRanking.sort((a, b) -> b.getGrossProfit().compareTo(a.getGrossProfit()));
+
+        MonthlyOverviewDTO dto = new MonthlyOverviewDTO();
+        dto.setYear(year);
+        dto.setMonth(month);
+        dto.setPurchaseTotal(purchaseTotal);
+        dto.setSalesTotal(salesTotal);
+        dto.setGrossProfit(grossProfit);
+        dto.setPaidToFarmers(paidToFarmers);
+        dto.setUnpaidToFarmers(unpaidToFarmers);
+        dto.setCollectedFromCustomers(collectedFromCustomers);
+        dto.setUncollectedFromCustomers(uncollectedFromCustomers);
+        dto.setCashDifference(cashDifference);
+        dto.setOtherExpenses(otherExpenses);
+        dto.setNetProfit(netProfit);
+        dto.setFarmerUnpaidRanking(farmerRanking);
+        dto.setCustomerUnreceivedRanking(customerRanking);
+        dto.setProductGrossRanking(productRanking);
+        return dto;
+    }
+
+    private BigDecimal nvl(BigDecimal v) { return v != null ? v : BigDecimal.ZERO; }
+
+    public MonthItemsReportDTO getPurchaseItemsByMonth(Long supplierId, int year, int month) {
+        List<Object[]> raw = supplierId != null
+                ? purchaseOrderItemRepository.itemDetailBySupplier(supplierId, year, month)
+                : purchaseOrderItemRepository.itemDetailAll(year, month);
+        String name = supplierId != null
+                ? supplierRepository.findById(supplierId).map(Supplier::getName).orElse("未知")
+                : "全部农户";
+        return buildItemsReport(supplierId, name, year, month, raw);
+    }
+
+    public MonthItemsReportDTO getSalesItemsByMonth(Long customerId, int year, int month) {
+        List<Object[]> raw = customerId != null
+                ? salesOrderItemRepository.itemDetailByCustomer(customerId, year, month)
+                : salesOrderItemRepository.itemDetailAll(year, month);
+        String name = customerId != null
+                ? customerRepository.findById(customerId).map(Customer::getName).orElse("未知")
+                : "全部客户";
+        return buildItemsReport(customerId, name, year, month, raw);
+    }
+
+    public PartnerListReportDTO getPurchasePartners(int year, Integer month) {
+        List<Object[]> raw = month != null
+                ? purchaseOrderRepository.supplierStatsByMonth(year, month)
+                : purchaseOrderRepository.supplierStatsByYear(year);
+        return buildPartnerListReport(year, month, raw);
+    }
+
+    public PartnerListReportDTO getSalesPartners(int year, Integer month) {
+        List<Object[]> raw = month != null
+                ? salesOrderRepository.customerStatsByMonth(year, month)
+                : salesOrderRepository.customerStatsByYear(year);
+        return buildPartnerListReport(year, month, raw);
+    }
+
+    private PartnerListReportDTO buildPartnerListReport(int year, Integer month, List<Object[]> rawRows) {
+        List<PartnerStatRowDTO> rows = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal settled = BigDecimal.ZERO;
+        if (rawRows != null) {
+            for (Object[] r : rawRows) {
+                PartnerStatRowDTO row = new PartnerStatRowDTO();
+                row.setEntityId(r[0] instanceof Number ? ((Number) r[0]).longValue() : null);
+                row.setName(r[1] != null ? r[1].toString() : "");
+                row.setOrderCount(r[2] instanceof Number ? ((Number) r[2]).longValue() : 0L);
+                BigDecimal amt = toBigDecimal(r[3]);
+                BigDecimal stl = toBigDecimal(r[4]);
+                row.setTotalAmount(amt);
+                row.setSettledAmount(stl);
+                row.setPendingAmount(amt.subtract(stl).max(BigDecimal.ZERO));
+                rows.add(row);
+                total = total.add(amt);
+                settled = settled.add(stl);
+            }
+        }
+        PartnerListReportDTO dto = new PartnerListReportDTO();
+        dto.setYear(year);
+        dto.setMonth(month);
+        dto.setRows(rows);
+        dto.setTotalAmount(total);
+        dto.setSettledAmount(settled);
+        dto.setPendingAmount(total.subtract(settled).max(BigDecimal.ZERO));
+        return dto;
+    }
+
+    private MonthItemsReportDTO buildItemsReport(Long entityId, String entityName, int year, int month, List<Object[]> raw) {
+        List<OrderItemDetailDTO> items = new ArrayList<>();
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        BigDecimal totalQuantity = BigDecimal.ZERO;
+        if (raw != null) {
+            for (Object[] r : raw) {
+                LocalDate date = r[0] instanceof LocalDate ? (LocalDate) r[0] : null;
+                String partnerName = r[1] != null ? r[1].toString() : "";
+                String orderNo = r[2] != null ? r[2].toString() : "";
+                String paymentStatus = r[3] != null ? r[3].toString() : "";
+                String productName = r[4] != null ? r[4].toString() : "";
+                String unit = r[5] != null ? r[5].toString() : "";
+                String spec = r[6] != null ? r[6].toString() : "";
+                BigDecimal qty = toBigDecimal(r[7]);
+                BigDecimal price = toBigDecimal(r[8]);
+                BigDecimal amount = toBigDecimal(r[9]);
+                items.add(new OrderItemDetailDTO(date, partnerName, orderNo, paymentStatus, productName, unit, spec, qty, price, amount));
+                totalAmount = totalAmount.add(amount);
+                totalQuantity = totalQuantity.add(qty);
+            }
+        }
+        MonthItemsReportDTO dto = new MonthItemsReportDTO();
+        dto.setEntityId(entityId);
+        dto.setEntityName(entityName);
+        dto.setYear(year);
+        dto.setMonth(month);
+        dto.setItems(items);
+        dto.setTotalAmount(totalAmount);
+        dto.setTotalQuantity(totalQuantity);
+        return dto;
+    }
+
+    public DailyReportDetailDTO getDailyPurchaseDetail(Long supplierId, int year, int month) {
+        List<Object[]> rows = supplierId != null
+                ? purchaseOrderRepository.dailyStatsBySupplier(supplierId, year, month)
+                : purchaseOrderRepository.dailyStatsAllSuppliers(year, month);
+        String name = supplierId != null
+                ? supplierRepository.findById(supplierId).map(Supplier::getName).orElse("未知")
+                : "全部农户";
+        return buildDailyDetail(supplierId, name, year, month, rows);
+    }
+
+    public DailyReportDetailDTO getDailySalesDetail(Long customerId, int year, int month) {
+        List<Object[]> rows = customerId != null
+                ? salesOrderRepository.dailyStatsByCustomer(customerId, year, month)
+                : salesOrderRepository.dailyStatsAllCustomers(year, month);
+        String name = customerId != null
+                ? customerRepository.findById(customerId).map(Customer::getName).orElse("未知")
+                : "全部客户";
+        return buildDailyDetail(customerId, name, year, month, rows);
+    }
+
+    private DailyReportDetailDTO buildDailyDetail(Long entityId, String entityName, int year, int month, List<Object[]> rawRows) {
+        List<DailyStatRowDTO> rows = new ArrayList<>();
+        BigDecimal monthTotal = BigDecimal.ZERO;
+        BigDecimal monthSettled = BigDecimal.ZERO;
+        if (rawRows != null) {
+            for (Object[] r : rawRows) {
+                LocalDate date = r[0] instanceof LocalDate ? (LocalDate) r[0] : null;
+                long cnt = r[1] instanceof Number ? ((Number) r[1]).longValue() : 0L;
+                BigDecimal total = toBigDecimal(r[2]);
+                BigDecimal settled = toBigDecimal(r[3]);
+                BigDecimal pending = total.subtract(settled).max(BigDecimal.ZERO);
+                rows.add(new DailyStatRowDTO(date, cnt, total, settled, pending));
+                monthTotal = monthTotal.add(total);
+                monthSettled = monthSettled.add(settled);
+            }
+        }
+        DailyReportDetailDTO dto = new DailyReportDetailDTO();
+        dto.setEntityId(entityId);
+        dto.setEntityName(entityName);
+        dto.setYear(year);
+        dto.setMonth(month);
+        dto.setRows(rows);
+        dto.setMonthTotalAmount(monthTotal);
+        dto.setMonthSettledAmount(monthSettled);
+        dto.setMonthPendingAmount(monthTotal.subtract(monthSettled).max(BigDecimal.ZERO));
+        return dto;
     }
 
     private MonthlyReportDTO buildMonthlyReport(Long entityId, String entityName, int year, List<Object[]> rawRows) {
@@ -234,13 +346,6 @@ public class AnalyticsService {
         dto.setYearSettledAmount(yearSettled);
         dto.setYearPendingAmount(yearTotal.subtract(yearSettled).max(BigDecimal.ZERO));
         return dto;
-    }
-
-    private static BigDecimal grossProfitFromRow(Object[] rc) {
-        if (rc == null || rc.length < 2) {
-            return BigDecimal.ZERO;
-        }
-        return toBigDecimal(rc[0]).subtract(toBigDecimal(rc[1]));
     }
 
     private static BigDecimal toBigDecimal(Object o) {
@@ -338,13 +443,6 @@ public class AnalyticsService {
         }
     }
 
-    private static LocalDate[] previousRange(LocalDate start, LocalDate end) {
-        long days = ChronoUnit.DAYS.between(start, end) + 1;
-        LocalDate prevEnd = start.minusDays(1);
-        LocalDate prevStart = prevEnd.minusDays(days - 1);
-        return new LocalDate[]{prevStart, prevEnd};
-    }
-
     private static List<SalesTrendPointDTO> buildFilledTrend(LocalDate start, LocalDate end, List<Object[]> rows) {
         Map<LocalDate, BigDecimal> map = new HashMap<>();
         if (rows != null) {
@@ -361,5 +459,14 @@ public class AnalyticsService {
                     return new SalesTrendPointDTO(d, map.getOrDefault(d, BigDecimal.ZERO));
                 })
                 .collect(Collectors.toList());
+    }
+
+    public Map<String, BigDecimal> getYearlyBalance(int year) {
+        BigDecimal unpaid = nvl(purchaseOrderRepository.sumUnpaidByYear(year));
+        BigDecimal uncollected = nvl(salesOrderRepository.sumUncollectedByYear(year));
+        Map<String, BigDecimal> result = new LinkedHashMap<>();
+        result.put("unpaidToFarmers", unpaid);
+        result.put("uncollectedFromCustomers", uncollected);
+        return result;
     }
 }

@@ -12,5 +12,4 @@ public class InventoryDTO {
     private Long warehouseId;
     private String warehouseName;
     private BigDecimal quantity;
-    private String remark;
 }

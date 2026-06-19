@@ -20,60 +20,52 @@ const routes = [
                 meta: { title: '仪表盘' }
             },
             {
-                path: 'data-management',
-                name: 'DataManagement',
-                component: () => import('../views/data/DataManagement.vue'),
-                meta: { title: '数据管理' },
-                children: [
-                    {
-                        path: 'products',
-                        name: 'Products',
-                        component: () => import('../views/data/ProductList.vue'),
-                        meta: { title: '商品管理' }
-                    },
-                    {
-                        path: 'inventory',
-                        name: 'Inventory',
-                        component: () => import('../views/data/InventoryList.vue'),
-                        meta: { title: '库存管理' }
-                    },
-                    {
-                        path: 'purchase',
-                        name: 'Purchase',
-                        component: () => import('../views/data/PurchaseOrderList.vue'),
-                        meta: { title: '采购管理' }
-                    },
-                    {
-                        path: 'sales',
-                        name: 'Sales',
-                        component: () => import('../views/data/SalesOrderList.vue'),
-                        meta: { title: '销售管理' }
-                    },
-                    {
-                        path: 'suppliers',
-                        name: 'Suppliers',
-                        component: () => import('../views/data/SupplierList.vue'),
-                        meta: { title: '供应商管理' }
-                    },
-                    {
-                        path: 'customers',
-                        name: 'Customers',
-                        component: () => import('../views/data/CustomerList.vue'),
-                        meta: { title: '客户管理' }
-                    }
-                ]
+                path: 'products',
+                name: 'Products',
+                component: () => import('../views/data/ProductList.vue'),
+                meta: { title: '商品管理' }
             },
             {
-                path: 'analysis',
-                name: 'Analysis',
-                component: () => import('../views/analysis/AnalysisDashboard.vue'),
-                meta: { title: '经营分析' }
+                path: 'inventory',
+                name: 'Inventory',
+                component: () => import('../views/data/InventoryList.vue'),
+                meta: { title: '库存管理' }
+            },
+            {
+                path: 'purchase',
+                name: 'Purchase',
+                component: () => import('../views/data/PurchaseOrderList.vue'),
+                meta: { title: '采购管理' }
+            },
+            {
+                path: 'sales',
+                name: 'Sales',
+                component: () => import('../views/data/SalesOrderList.vue'),
+                meta: { title: '销售管理' }
+            },
+            {
+                path: 'suppliers',
+                name: 'Suppliers',
+                component: () => import('../views/data/SupplierList.vue'),
+                meta: { title: '供应商管理' }
+            },
+            {
+                path: 'customers',
+                name: 'Customers',
+                component: () => import('../views/data/CustomerList.vue'),
+                meta: { title: '客户管理' }
+            },
+            {
+                path: 'expenses',
+                name: 'Expenses',
+                component: () => import('../views/data/ExpenseList.vue'),
+                meta: { title: '支出记录' }
             },
             {
                 path: 'monthly-report',
                 name: 'MonthlyReport',
                 component: () => import('../views/analysis/MonthlyReport.vue'),
-                meta: { title: '月度报表' }
+                meta: { title: '对账' }
             },
             {
                 path: 'profile',

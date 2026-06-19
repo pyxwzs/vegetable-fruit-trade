@@ -18,8 +18,6 @@ public class PurchaseOrderDTO {
 
     private String paymentMethod;
 
-    private String remark;
-
     @NotEmpty(message = "订单明细不能为空")
     @Valid
     private List<PurchaseOrderItemDTO> items;

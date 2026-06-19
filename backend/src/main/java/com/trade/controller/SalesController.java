@@ -1,9 +1,6 @@
 package com.trade.controller;
 
-import com.trade.dto.OrderPaymentDTO;
-import com.trade.dto.ReturnRequestDTO;
-import com.trade.dto.SalesOrderDTO;
-import com.trade.dto.SalesReturnDTO;
+import com.trade.dto.*;
 import com.trade.entity.SalesOrder;
 import com.trade.service.ReturnRequestService;
 import com.trade.service.SalesService;
@@ -15,7 +12,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.validation.Valid;
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/sales")
@@ -29,12 +30,15 @@ public class SalesController {
     public ApiResponse<Page<SalesOrder>> getSalesOrders(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         SalesOrder.OrderStatus st = null;
         if (status != null && !status.isBlank()) {
             st = SalesOrder.OrderStatus.valueOf(status.trim().toUpperCase());
         }
-        return ApiResponse.success(salesService.getSalesOrders(keyword, st, pageable));
+        return ApiResponse.success(salesService.getSalesOrders(keyword, st, paymentStatus, startDate, endDate, pageable));
     }
 
     @GetMapping("/{id}")
@@ -67,7 +71,17 @@ public class SalesController {
 
     @PostMapping("/{id}/collect")
     public ApiResponse<SalesOrder> recordReceipt(
-            @PathVariable Long id, @Valid @RequestBody OrderPaymentDTO dto) {
-        return ApiResponse.success(salesService.recordReceipt(id, dto.getAmount()));
+            @PathVariable Long id, @RequestBody AddPaymentDTO dto) {
+        return ApiResponse.success(salesService.recordReceipt(id, dto));
+    }
+
+    @GetMapping("/{id}/payments")
+    public ApiResponse<List<PaymentRecordDTO>> getPayments(@PathVariable Long id) {
+        return ApiResponse.success(salesService.getPaymentHistory(id));
+    }
+
+    @GetMapping("/pending-stats")
+    public ApiResponse<java.util.Map<String, Object>> pendingStats() {
+        return ApiResponse.success(salesService.getPendingStats());
     }
 }

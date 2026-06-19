@@ -21,17 +21,24 @@ public interface SalesOrderItemRepository extends JpaRepository<SalesOrderItem, 
     @Query("SELECT COALESCE(SUM(i.amount), 0), 0 FROM SalesOrderItem i JOIN i.salesOrder o WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status = 'COMPLETED'")
     Object[] sumRevenueAndEstimatedCost(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
-    @Query(value = "SELECT COALESCE(c.name, '未分类'), COALESCE(SUM(i.amount), 0) "
-            + "FROM sales_order_items i "
-            + "INNER JOIN sales_orders o ON i.order_id = o.id "
-            + "INNER JOIN products p ON i.product_id = p.id "
-            + "LEFT JOIN categories c ON p.category_id = c.id "
-            + "WHERE o.order_date >= :start AND o.order_date <= :end "
-            + "AND o.status = 'COMPLETED' "
-            + "GROUP BY COALESCE(c.id, -1), COALESCE(c.name, '未分类')",
-            nativeQuery = true)
-    List<Object[]> sumSalesByCategory(@Param("start") LocalDate start, @Param("end") LocalDate end);
-
     @Query("SELECT o.customer.id, o.customer.name, COUNT(DISTINCT o.id), COALESCE(SUM(i.amount), 0), 0 FROM SalesOrderItem i JOIN i.salesOrder o WHERE o.orderDate >= :start AND o.orderDate <= :end AND o.status = 'COMPLETED' GROUP BY o.customer.id, o.customer.name ORDER BY SUM(i.amount) DESC")
     List<Object[]> customerValueStats(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    @Query("SELECT i.salesOrder.orderDate, o.customer.name, o.orderNo, o.paymentStatus, " +
+           "i.product.name, i.product.unit, i.product.specification, " +
+           "i.quantity, i.price, i.amount " +
+           "FROM SalesOrderItem i JOIN i.salesOrder o " +
+           "WHERE o.customer.id = :customerId " +
+           "AND YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status <> 'CANCELLED' " +
+           "ORDER BY o.orderDate, i.product.name")
+    List<Object[]> itemDetailByCustomer(@Param("customerId") Long customerId,
+                                        @Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT i.salesOrder.orderDate, o.customer.name, o.orderNo, o.paymentStatus, " +
+           "i.product.name, i.product.unit, i.product.specification, " +
+           "i.quantity, i.price, i.amount " +
+           "FROM SalesOrderItem i JOIN i.salesOrder o " +
+           "WHERE YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status <> 'CANCELLED' " +
+           "ORDER BY o.orderDate, o.customer.name, i.product.name")
+    List<Object[]> itemDetailAll(@Param("year") int year, @Param("month") int month);
 }

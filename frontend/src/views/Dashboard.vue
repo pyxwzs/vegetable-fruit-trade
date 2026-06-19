@@ -1,255 +1,578 @@
 <template>
-  <div class="dashboard">
-    <!-- 日报摘要条 -->
-    <el-alert
-        v-if="dailyReport"
-        type="info"
-        show-icon
-        :closable="false"
-        class="daily-strip"
-        :title="`经营日报（${reportDate}）`"
-    >
-      <template #default>
-        <span class="daily-meta">
-          今日出库销售额 <strong>¥{{ fmtMoney(dailyReport.realizedSales) }}</strong>
-          ｜ 新销售单 {{ dailyReport.newOrderCount }} 笔
-          ｜ 新采购单 {{ dailyReport.newPurchaseOrderCount }} 笔
-          ｜ 待处理采购 {{ dailyReport.pendingPurchaseCount }}
-          ｜ 待处理销售 {{ dailyReport.pendingSalesCount }}
-        </span>
-      </template>
-    </el-alert>
+  <div class="dashboard" v-loading="overviewLoading">
 
-    <!-- 统计卡片 -->
-    <el-row :gutter="20">
-      <el-col :span="6" v-for="item in statistics" :key="item.title">
-        <el-card class="stat-card" :body-style="{ padding: '20px' }">
-          <div class="stat-item">
-            <div class="stat-info">
-              <div class="stat-title">{{ item.title }}</div>
-              <div class="stat-value">{{ item.value }}</div>
+    <!-- 应该赚了 vs 实际赚了 -->
+    <el-card class="hero-card" shadow="never">
+      <div class="hero-month-bar">{{ monthLabel }}</div>
+      <div class="hero-dual">
+        <!-- 按单据 -->
+        <div class="hero-profit book" :class="{ negative: bookProfit < 0 }">
+          <div class="hero-label">应赚</div>
+          <div class="hero-sub">销售 − 采购 − 支出</div>
+          <div class="hero-value">
+            {{ bookProfit >= 0 ? '+' : '' }}¥{{ fmt(bookProfit) }}
+          </div>
+          <div class="hero-breakdown">
+            <div class="breakdown-item">
+              <span>销售</span>
+              <b>¥{{ fmt(overview.salesTotal) }}</b>
             </div>
-            <div class="stat-icon" :style="{ background: item.color + '20' }">
-              <el-icon :size="32" :color="item.color">
-                <component :is="item.icon" />
-              </el-icon>
+            <div class="breakdown-sep">−</div>
+            <div class="breakdown-item">
+              <span>采购</span>
+              <b>¥{{ fmt(overview.purchaseTotal) }}</b>
+            </div>
+            <div class="breakdown-sep">−</div>
+            <div class="breakdown-item">
+              <span>支出</span>
+              <b>¥{{ fmt(overview.otherExpenses) }}</b>
             </div>
           </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
 
-    <!-- 图表 -->
-    <el-row :gutter="20" class="chart-row">
-      <el-col :span="24">
-        <el-card>
-          <template #header>
-            <span>销售趋势（近7日出库额）</span>
-          </template>
-          <div ref="salesChart" style="height: 300px"></div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 待办订单表格 -->
-    <el-row :gutter="20" class="table-row">
-      <el-col :span="12">
-        <el-card>
-          <template #header>
-            <div class="card-header">
-              <span>待办采购订单</span>
-              <el-button type="primary" link @click="$router.push('/data-management/purchase')">
-                查看更多
-              </el-button>
+        <!-- 按收付 -->
+        <div class="hero-profit cash" :class="{ negative: cashProfit < 0 }">
+          <div class="hero-label">实赚</div>
+          <div class="hero-sub">已收 − 已付 − 支出</div>
+          <div class="hero-value">
+            {{ cashProfit >= 0 ? '+' : '' }}¥{{ fmt(cashProfit) }}
+          </div>
+          <div class="hero-breakdown">
+            <div class="breakdown-item">
+              <span>已收</span>
+              <b>¥{{ fmt(overview.collectedFromCustomers) }}</b>
             </div>
-          </template>
-          <el-table :data="pendingPurchases" style="width: 100%">
-            <el-table-column prop="orderNo" label="订单号" width="170" />
-            <el-table-column label="供应商" min-width="120">
-              <template #default="{ row }">{{ row.supplier?.name || '—' }}</template>
-            </el-table-column>
-            <el-table-column label="金额">
-              <template #default="{ row }">¥{{ Number(row.totalAmount || 0).toFixed(2) }}</template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态">
-              <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)">{{ statusText(row.status) }}</el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-
-      <el-col :span="12">
-        <el-card>
-          <template #header>
-            <div class="card-header">
-              <span>待处理销售订单</span>
-              <el-button type="primary" link @click="$router.push('/data-management/sales')">
-                查看更多
-              </el-button>
+            <div class="breakdown-sep">−</div>
+            <div class="breakdown-item">
+              <span>已付</span>
+              <b>¥{{ fmt(overview.paidToFarmers) }}</b>
             </div>
-          </template>
-          <el-table :data="pendingSales" style="width: 100%">
-            <el-table-column prop="orderNo" label="订单号" width="170" />
-            <el-table-column label="客户" min-width="120">
-              <template #default="{ row }">{{ row.customer?.name || '—' }}</template>
-            </el-table-column>
-            <el-table-column label="金额">
-              <template #default="{ row }">¥{{ Number(row.totalAmount || 0).toFixed(2) }}</template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态">
-              <template #default="{ row }">
-                <el-tag :type="getStatusType(row.status)">{{ statusText(row.status) }}</el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-    </el-row>
+            <div class="breakdown-sep">−</div>
+            <div class="breakdown-item">
+              <span>支出</span>
+              <b>¥{{ fmt(overview.otherExpenses) }}</b>
+            </div>
+          </div>
+          <div class="pending-row">
+            <span class="pending-chip">待收 ¥{{ fmt(overview.uncollectedFromCustomers) }}</span>
+            <span class="pending-chip">待付 ¥{{ fmt(overview.unpaidToFarmers) }}</span>
+          </div>
+        </div>
+      </div>
+    </el-card>
+
+    <!-- 往来与库存 -->
+    <el-card class="stat-card" shadow="never">
+      <div class="stat-grid">
+        <div class="stat-cell">
+          <span class="stat-label">未收客户</span>
+          <span class="stat-value text-danger">¥{{ fmt(overview.uncollectedFromCustomers) }}</span>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-label">未付农户</span>
+          <span class="stat-value text-danger">¥{{ fmt(overview.unpaidToFarmers) }}</span>
+        </div>
+        <div class="stat-cell clickable" @click="router.push('/inventory')">
+          <span class="stat-label">库存价值</span>
+          <span class="stat-value text-purple">¥{{ fmt(inventoryValue) }}</span>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-label">应实差</span>
+          <span class="stat-value" :class="profitGap >= 0 ? 'text-profit' : 'text-danger'">
+            {{ profitGap >= 0 ? '+' : '' }}¥{{ fmt(profitGap) }}
+          </span>
+        </div>
+      </div>
+    </el-card>
+
+    <!-- 待办 -->
+    <el-card class="todo-card" shadow="never">
+      <template #header>
+        <span class="card-title">待办事项</span>
+      </template>
+
+      <div class="todo-grid">
+        <section class="todo-block">
+          <div class="todo-head">
+            <div class="todo-head-left">
+              <span class="todo-title">待入库</span>
+              <span v-if="purchasePending.count" class="todo-badge">
+                {{ purchasePending.count }} 笔 · ¥{{ fmt(purchasePending.totalAmount) }}
+              </span>
+            </div>
+            <el-button type="primary" link @click="router.push('/purchase')">全部 ›</el-button>
+          </div>
+          <div v-if="pendingPurchases.length" class="todo-list">
+            <div v-for="row in pendingPurchases" :key="row.id" class="todo-row">
+              <span class="todo-name">{{ row.supplier?.name || '—' }}</span>
+              <span class="todo-date">{{ row.orderDate }}</span>
+              <span class="todo-amount">¥{{ fmt(row.totalAmount) }}</span>
+            </div>
+          </div>
+          <div v-else class="todo-empty">暂无待入库</div>
+        </section>
+
+        <section class="todo-block">
+          <div class="todo-head">
+            <div class="todo-head-left">
+              <span class="todo-title">待出库</span>
+              <span v-if="salesPending.count" class="todo-badge">
+                {{ salesPending.count }} 笔 · ¥{{ fmt(salesPending.totalAmount) }}
+              </span>
+            </div>
+            <el-button type="primary" link @click="router.push('/sales')">全部 ›</el-button>
+          </div>
+          <div v-if="pendingSales.length" class="todo-list">
+            <div v-for="row in pendingSales" :key="row.id" class="todo-row">
+              <span class="todo-name">{{ row.customer?.name || '—' }}</span>
+              <span class="todo-date">{{ row.orderDate }}</span>
+              <span class="todo-amount">¥{{ fmt(row.totalAmount) }}</span>
+            </div>
+          </div>
+          <div v-else class="todo-empty">暂无待出库</div>
+        </section>
+
+        <section class="todo-block">
+          <div class="todo-head">
+            <span class="todo-title">待付款农户</span>
+            <el-button type="primary" link @click="router.push('/purchase')">去付款 ›</el-button>
+          </div>
+          <div v-if="farmerRanking.length" class="todo-list">
+            <div v-for="(row, i) in farmerRanking" :key="i" class="todo-row">
+              <span class="todo-name">{{ row.name }}</span>
+              <span class="todo-amount text-danger">¥{{ fmt(row.unpaid) }}</span>
+            </div>
+          </div>
+          <div v-else class="todo-empty">本月无欠款</div>
+        </section>
+
+        <section class="todo-block">
+          <div class="todo-head">
+            <span class="todo-title">待收款客户</span>
+            <el-button type="primary" link @click="router.push('/sales')">去收款 ›</el-button>
+          </div>
+          <div v-if="customerRanking.length" class="todo-list">
+            <div v-for="(row, i) in customerRanking" :key="i" class="todo-row">
+              <span class="todo-name">{{ row.name }}</span>
+              <span class="todo-amount text-danger">¥{{ fmt(row.unpaid) }}</span>
+            </div>
+          </div>
+          <div v-else class="todo-empty">本月无欠款</div>
+        </section>
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import * as echarts from 'echarts'
-import { ShoppingCart, Money, Goods, User } from '@element-plus/icons-vue'
-import { getPurchaseOrders } from '@/api/purchase'
-import { getSalesOrders } from '@/api/sales'
-import { getHomeSummary } from '@/api/analytics'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { getPurchaseOrders, getPurchasePendingStats } from '@/api/purchase'
+import { getSalesOrders, getSalesPendingStats } from '@/api/sales'
+import { getMonthlyOverview } from '@/api/analytics'
+import { getInventoryOverview } from '@/api/inventory'
 
-const homeData = ref(null)
-const dailyReport = ref(null)
-const weekTrend = ref([])
+const router = useRouter()
+
+const overviewLoading = ref(false)
+const overview = ref({
+  purchaseTotal: 0,
+  salesTotal: 0,
+  paidToFarmers: 0,
+  collectedFromCustomers: 0,
+  unpaidToFarmers: 0,
+  uncollectedFromCustomers: 0,
+  otherExpenses: 0,
+  cashDifference: 0,
+  netProfit: 0,
+  farmerUnpaidRanking: [],
+  customerUnreceivedRanking: []
+})
+const inventoryValue = ref(0)
+const purchasePending = ref({ count: 0, totalAmount: 0 })
+const salesPending = ref({ count: 0, totalAmount: 0 })
 const pendingPurchases = ref([])
 const pendingSales = ref([])
 
-const reportDate = computed(() => dailyReport.value?.date || '')
-const fmtMoney = (v) => (v != null ? Number(v).toFixed(2) : '0.00')
-const mk = (title, value, icon, color) => ({ title, value: String(value ?? 0), icon, color })
+const fmt = (v) => Number(v || 0).toFixed(2)
 
-const statistics = computed(() => {
-  const s = homeData.value
-  const dr = s?.dailyReport
-  if (!dr) {
-    return [
-      mk('今日销售额', '¥ 0', Money, '#409EFF'),
-      mk('今日采购新单', 0, ShoppingCart, '#67C23A'),
-      mk('库存商品数', 0, Goods, '#E6A23C'),
-      mk('启用客户数', 0, User, '#F56C6C')
-    ]
-  }
-  return [
-    { title: '今日销售额', value: '¥ ' + fmtMoney(dr.realizedSales), icon: Money, color: '#409EFF' },
-    mk('今日采购新单', dr.newPurchaseOrderCount, ShoppingCart, '#67C23A'),
-    mk('库存商品数', s.stockKeepingProductCount, Goods, '#E6A23C'),
-    mk('启用客户数', s.activeCustomerCount, User, '#F56C6C')
-  ]
+const monthLabel = computed(() => {
+  const now = new Date()
+  return `${now.getFullYear()}年${now.getMonth() + 1}月`
 })
 
-const salesChart = ref(null)
-let salesChartInst = null
-let resizeHandler = null
+const bookProfit = computed(() =>
+  Number(overview.value.netProfit ?? (
+    Number(overview.value.salesTotal || 0)
+    - Number(overview.value.purchaseTotal || 0)
+    - Number(overview.value.otherExpenses || 0)
+  ))
+)
 
-const renderSalesChart = () => {
-  if (!salesChart.value) return
-  if (!salesChartInst) salesChartInst = echarts.init(salesChart.value)
-  const pts = weekTrend.value || []
-  salesChartInst.setOption({
-    tooltip: { trigger: 'axis' },
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: { type: 'category', data: pts.map((p) => (p.date ? String(p.date).slice(5) : '')) },
-    yAxis: { type: 'value', name: '金额(元)' },
-    series: [{
-      name: '出库销售额',
-      type: 'line',
-      data: pts.map((p) => Number(p.amount || 0)),
-      smooth: true,
-      symbol: 'circle',
-      lineStyle: { color: '#409EFF', width: 3 },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(64,158,255,0.5)' },
-          { offset: 1, color: 'rgba(64,158,255,0.1)' }
-        ])
-      }
-    }]
-  })
+const cashProfit = computed(() =>
+  Number(overview.value.collectedFromCustomers || 0)
+  - Number(overview.value.paidToFarmers || 0)
+  - Number(overview.value.otherExpenses || 0)
+)
+
+const profitGap = computed(() => bookProfit.value - cashProfit.value)
+
+const farmerRanking = computed(() =>
+  (overview.value.farmerUnpaidRanking || [])
+    .filter(r => Number(r.unpaid) > 0)
+    .slice(0, 5)
+)
+
+const customerRanking = computed(() =>
+  (overview.value.customerUnreceivedRanking || [])
+    .filter(r => Number(r.unpaid) > 0)
+    .slice(0, 5)
+)
+
+const loadOverview = async () => {
+  overviewLoading.value = true
+  const now = new Date()
+  try {
+    const res = await getMonthlyOverview({ year: now.getFullYear(), month: now.getMonth() + 1 })
+    if (res.data) overview.value = res.data
+  } catch { /* silent */ } finally { overviewLoading.value = false }
 }
 
-const loadHome = async () => {
+const loadExtra = async () => {
   try {
-    const res = await getHomeSummary()
-    homeData.value = res.data
-    dailyReport.value = res.data?.dailyReport
-    weekTrend.value = res.data?.weekSalesTrend || []
-    renderSalesChart()
-  } catch (e) {
-    console.error('加载首页数据失败', e)
-  }
-}
-
-const loadPendingOrders = async () => {
-  try {
-    const [purchase, sales] = await Promise.all([
-      getPurchaseOrders({ status: 'PENDING', page: 0, size: 8 }),
-      getSalesOrders({ status: 'PENDING', page: 0, size: 8 })
+    const [inv, pp, sp, purchase, sales] = await Promise.all([
+      getInventoryOverview(),
+      getPurchasePendingStats(),
+      getSalesPendingStats(),
+      getPurchaseOrders({ status: 'PENDING', page: 0, size: 5 }),
+      getSalesOrders({ status: 'PENDING', page: 0, size: 5 })
     ])
+    inventoryValue.value = inv.data?.totalValue || 0
+    purchasePending.value = {
+      count: Number(pp.data?.count || 0),
+      totalAmount: Number(pp.data?.totalAmount || 0)
+    }
+    salesPending.value = {
+      count: Number(sp.data?.count || 0),
+      totalAmount: Number(sp.data?.totalAmount || 0)
+    }
     pendingPurchases.value = purchase.data?.content || []
     pendingSales.value = sales.data?.content || []
-  } catch (e) {
-    console.error('加载待办订单失败', e)
-  }
+  } catch { /* silent */ }
 }
 
-const getStatusType = (status) => ({
-  PENDING: 'info', COMPLETED: 'success', CANCELLED: 'danger'
-}[status] || 'info')
-
-const statusText = (status) => ({
-  PENDING: '待处理', COMPLETED: '已完成', CANCELLED: '已取消'
-}[status] || status)
-
 onMounted(() => {
-  loadHome()
-  loadPendingOrders()
-  resizeHandler = () => salesChartInst?.resize()
-  window.addEventListener('resize', resizeHandler)
-})
-
-onUnmounted(() => {
-  if (resizeHandler) window.removeEventListener('resize', resizeHandler)
-  salesChartInst?.dispose()
+  loadOverview()
+  loadExtra()
 })
 </script>
 
 <style scoped lang="scss">
 .dashboard {
-  .daily-strip { margin-bottom: 16px; }
-  .daily-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-card,
+.stat-card,
+.todo-card {
+  :deep(.el-card__body) { padding: 0; }
+  :deep(.el-card__header) {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.hero-month-bar {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #606266;
+  padding: 12px 16px 0;
+}
+
+.hero-dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: #f0f0f0;
+}
+
+/* 应该赚了 / 实际赚了 */
+.hero-profit {
+  color: #fff;
+  padding: 16px 12px 14px;
+  text-align: center;
+
+  &.book {
+    background: linear-gradient(145deg, #5daf34 0%, #67c23a 50%, #85ce61 100%);
+    &.negative {
+      background: linear-gradient(145deg, #d9534f 0%, #f56c6c 50%, #f78989 100%);
+    }
+  }
+
+  &.cash {
+    background: linear-gradient(145deg, #337ecc 0%, #409eff 50%, #66b1ff 100%);
+    &.negative {
+      background: linear-gradient(145deg, #c45656 0%, #e06c75 50%, #f78989 100%);
+    }
+  }
+}
+
+.hero-sub {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.hero-label {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.hero-value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 8px 0 12px;
+  line-height: 1.2;
+}
+
+.hero-breakdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.breakdown-item {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-width: 72px;
+
+  span {
+    display: block;
+    font-size: 11px;
+    opacity: 0.85;
+  }
+  b {
+    display: block;
     font-size: 13px;
-    line-height: 1.6;
-    strong { color: var(--el-color-primary); }
+    font-weight: 700;
+    margin-top: 2px;
   }
-  .stat-card .stat-item {
-    display: flex;
-    justify-content: space-between;
+}
+
+.breakdown-sep {
+  font-size: 14px;
+  opacity: 0.6;
+  font-weight: 300;
+}
+
+.pending-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.pending-chip {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 3px 10px;
+  opacity: 0.95;
+}
+
+/* 往来四格 */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: #f0f0f0;
+}
+
+.stat-cell {
+  background: #fff;
+  padding: 14px 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &.clickable {
+    cursor: pointer;
+    &:active { background: #faf5fc; }
+  }
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #909399;
+}
+
+.stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #303133;
+  word-break: break-all;
+}
+
+/* 待办 */
+.todo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: #f0f0f0;
+}
+
+.todo-block {
+  background: #fff;
+  padding: 12px 14px;
+  min-width: 0;
+}
+
+.todo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.todo-head-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.todo-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.todo-badge {
+  font-size: 11px;
+  color: #909399;
+}
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.todo-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+  font-size: 13px;
+
+  &:last-child { border-bottom: none; padding-bottom: 0; }
+}
+
+.todo-name {
+  grid-column: 1;
+  grid-row: 1;
+  color: #303133;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo-date {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 11px;
+  color: #c0c4cc;
+}
+
+.todo-amount {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  font-weight: 600;
+  color: #303133;
+  white-space: nowrap;
+}
+
+.todo-empty {
+  font-size: 12px;
+  color: #c0c4cc;
+  text-align: center;
+  padding: 12px 0 4px;
+}
+
+.text-danger { color: #f56c6c !important; }
+.text-profit { color: #67c23a !important; }
+.text-purple { color: #9a60b4 !important; }
+
+@media (min-width: 768px) {
+  .stat-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .stat-value { font-size: 17px; }
+
+  .hero-value { font-size: 30px; }
+
+  .hero-dual { grid-template-columns: 1fr 1fr; }
+
+  .todo-row {
+    grid-template-columns: 1fr auto auto;
+    grid-template-rows: auto;
     align-items: center;
-    .stat-info {
-      .stat-title { font-size: 14px; color: #909399; margin-bottom: 8px; }
-      .stat-value { font-size: 24px; font-weight: bold; color: #303133; }
-    }
-    .stat-icon {
-      width: 60px; height: 60px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-    }
   }
-  .chart-row  { margin-top: 20px; }
-  .table-row  { margin-top: 20px; }
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+
+  .todo-date {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 12px;
   }
+
+  .todo-amount {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-dual {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-value { font-size: 24px; }
+
+  .breakdown-item {
+    min-width: calc(33% - 16px);
+    flex: 1;
+  }
+
+  .breakdown-sep { display: none; }
+
+  .hero-breakdown {
+    gap: 8px;
+  }
+
+  .todo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-value { font-size: 14px; }
 }
 </style>

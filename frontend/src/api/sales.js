@@ -23,3 +23,11 @@ export function cancelSalesOrder(id) {
 export function collectSalesOrder(id, data) {
   return request({ url: `/sales/${id}/collect`, method: 'post', data })
 }
+
+export function getSalePayments(id) {
+  return request({ url: `/sales/${id}/payments`, method: 'get' })
+}
+
+export function getSalesPendingStats() {
+  return request({ url: '/sales/pending-stats', method: 'get' })
+}

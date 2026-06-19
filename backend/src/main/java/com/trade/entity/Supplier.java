@@ -31,8 +31,6 @@ public class Supplier {
     @Column(length = 200)
     private String address;
 
-    private String remark;
-
     @Enumerated(EnumType.STRING)
     private SupplierStatus status = SupplierStatus.ACTIVE;
 

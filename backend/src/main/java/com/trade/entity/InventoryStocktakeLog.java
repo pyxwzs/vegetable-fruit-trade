@@ -28,9 +28,6 @@ public class InventoryStocktakeLog {
     @Column(name = "diff_qty", nullable = false, precision = 10, scale = 3)
     private BigDecimal diffQty;
 
-    @Column(length = 500)
-    private String remark;
-
     @Column(name = "operator_username", length = 64)
     private String operatorUsername;
 

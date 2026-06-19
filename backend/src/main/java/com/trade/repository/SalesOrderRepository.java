@@ -65,4 +65,53 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, J
            "FROM SalesOrder o WHERE YEAR(o.orderDate) = :year AND o.status <> 'CANCELLED' " +
            "GROUP BY MONTH(o.orderDate) ORDER BY MONTH(o.orderDate)")
     List<Object[]> monthlyStatsAllCustomers(@Param("year") int year);
+
+    @Query("SELECT o.orderDate, COUNT(o), COALESCE(SUM(o.totalAmount),0), COALESCE(SUM(o.receivedAmount),0) " +
+           "FROM SalesOrder o WHERE o.customer.id = :customerId " +
+           "AND YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status <> 'CANCELLED' " +
+           "GROUP BY o.orderDate ORDER BY o.orderDate")
+    List<Object[]> dailyStatsByCustomer(@Param("customerId") Long customerId, @Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT o.orderDate, COUNT(o), COALESCE(SUM(o.totalAmount),0), COALESCE(SUM(o.receivedAmount),0) " +
+           "FROM SalesOrder o WHERE YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status <> 'CANCELLED' " +
+           "GROUP BY o.orderDate ORDER BY o.orderDate")
+    List<Object[]> dailyStatsAllCustomers(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM SalesOrder o " +
+           "WHERE YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status = 'COMPLETED'")
+    BigDecimal sumCompletedByMonth(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount - COALESCE(o.receivedAmount, 0)), 0) FROM SalesOrder o " +
+           "WHERE YEAR(o.orderDate) = :year AND o.status = 'COMPLETED' AND o.paymentStatus <> 'PAID'")
+    BigDecimal sumUncollectedByYear(@Param("year") int year);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM SalesOrder o WHERE o.status = 'PENDING'")
+    java.math.BigDecimal sumPendingAmount();
+
+    @Query("SELECT o.customer.id, o.customer.name, COUNT(o), COALESCE(SUM(o.totalAmount), 0), COALESCE(SUM(o.receivedAmount), 0) " +
+           "FROM SalesOrder o " +
+           "WHERE YEAR(o.orderDate) = :year AND o.status <> 'CANCELLED' " +
+           "GROUP BY o.customer.id, o.customer.name " +
+           "ORDER BY (SUM(o.totalAmount) - SUM(o.receivedAmount)) DESC")
+    List<Object[]> customerStatsByYear(@Param("year") int year);
+
+    @Query("SELECT o.customer.id, o.customer.name, COUNT(o), COALESCE(SUM(o.totalAmount), 0), COALESCE(SUM(o.receivedAmount), 0) " +
+           "FROM SalesOrder o " +
+           "WHERE YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status <> 'CANCELLED' " +
+           "GROUP BY o.customer.id, o.customer.name " +
+           "ORDER BY (SUM(o.totalAmount) - SUM(o.receivedAmount)) DESC")
+    List<Object[]> customerStatsByMonth(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT o.customer.name, COALESCE(SUM(o.totalAmount), 0), COALESCE(SUM(o.receivedAmount), 0) " +
+           "FROM SalesOrder o " +
+           "WHERE YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status = 'COMPLETED' " +
+           "GROUP BY o.customer.id, o.customer.name " +
+           "ORDER BY (SUM(o.totalAmount) - SUM(o.receivedAmount)) DESC")
+    List<Object[]> customerBalanceRanking(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT i.product.name, i.product.unit, COALESCE(SUM(i.amount), 0) " +
+           "FROM SalesOrderItem i JOIN i.salesOrder o " +
+           "WHERE YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status = 'COMPLETED' " +
+           "GROUP BY i.product.id, i.product.name, i.product.unit")
+    List<Object[]> productSalesSumByMonth(@Param("year") int year, @Param("month") int month);
 }

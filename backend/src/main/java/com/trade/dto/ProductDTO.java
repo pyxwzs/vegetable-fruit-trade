@@ -9,13 +9,10 @@ public class ProductDTO {
 
     private Long id;
 
-    @NotBlank(message = "商品编码不能为空")
-    private String productCode;
-
     @NotBlank(message = "商品名称不能为空")
     private String name;
 
-    private Long categoryId;
+    private String category;
 
     private String unit;
 

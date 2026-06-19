@@ -1,0 +1,33 @@
+package com.trade.entity;
+
+import lombok.Data;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
+@Entity
+@Table(name = "purchase_payments")
+public class PurchasePayment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
+    private PurchaseOrder order;
+
+    @Column(nullable = false)
+    private LocalDate paymentDate;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal amount;
+
+    private String paymentMethod;
+
+    @Column(updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+}

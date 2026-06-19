@@ -22,9 +22,8 @@ public class Product {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private Category category;
+    @Column(length = 50)
+    private String category;
 
     @Column(length = 20)
     private String unit;

@@ -1,6 +1,7 @@
 package com.trade.controller;
 
 import com.trade.dto.InventoryMovementDTO;
+import com.trade.dto.InventoryOverviewDTO;
 import com.trade.entity.Inventory;
 import com.trade.service.InventoryService;
 import com.trade.util.ApiResponse;
@@ -28,6 +29,11 @@ public class InventoryController {
             @RequestParam(required = false) Long warehouseId,
             @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResponse.success(inventoryService.getInventories(keyword, productId, warehouseId, pageable));
+    }
+
+    @GetMapping("/overview")
+    public ApiResponse<InventoryOverviewDTO> getOverview() {
+        return ApiResponse.success(inventoryService.getOverview());
     }
 
     @PostMapping("/inbound")

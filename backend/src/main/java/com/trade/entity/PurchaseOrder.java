@@ -44,8 +44,6 @@ public class PurchaseOrder {
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.PENDING;
 
-    private String remark;
-
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<PurchaseOrderItem> items = new ArrayList<>();
 

@@ -11,10 +11,6 @@ public class SupplierDTO {
 
     private Long id;
 
-    @NotBlank(message = "供应商编码不能为空")
-    @Size(max = 50)
-    private String supplierCode;
-
     @NotBlank(message = "供应商名称不能为空")
     @Size(max = 100)
     private String name;
@@ -27,9 +23,6 @@ public class SupplierDTO {
 
     @Size(max = 200)
     private String address;
-
-    @Size(max = 500)
-    private String remark;
 
     private String status;
 
