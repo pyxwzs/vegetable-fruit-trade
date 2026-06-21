@@ -1,19 +1,21 @@
 package com.trade.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "warehouses")
-public class Warehouse {
+@Table(name = "warehouses", uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "code"}))
+public class Warehouse extends TenantAwareEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(nullable = false, length = 50)
     private String code;
 
     @Column(nullable = false, length = 100)

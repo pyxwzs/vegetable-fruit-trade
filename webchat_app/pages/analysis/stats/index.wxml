@@ -1,0 +1,94 @@
+<wxs src="../../../utils/format.wxs" module="f" />
+<view class="stats-page">
+  <view class="tab-bar">
+    <view
+      wx:for="{{ tabs }}"
+      wx:key="key"
+      class="tab-item {{ activeTab === item.key ? 'active' : '' }}"
+      data-key="{{ item.key }}"
+      bindtap="onTabChange"
+    >{{ item.label }}</view>
+  </view>
+
+  <view class="toolbar">
+    <picker mode="selector" range="{{ yearOptions }}" value="{{ yearIndex }}" bindchange="onYearChange">
+      <view class="tool-picker">{{ yearOptions[yearIndex] }}年 ▾</view>
+    </picker>
+    <picker mode="selector" range="{{ monthOptions }}" range-key="label" value="{{ monthIndex }}" bindchange="onMonthChange">
+      <view class="tool-picker">{{ monthOptions[monthIndex].label }} ▾</view>
+    </picker>
+    <picker mode="selector" range="{{ entityOptions }}" range-key="name" value="{{ entityIndex }}" bindchange="onEntityChange">
+      <view class="tool-picker entity">{{ entityOptions[entityIndex].name }} ▾</view>
+    </picker>
+  </view>
+
+  <view class="summary-panel">
+    <view class="summary-title">汇总指标</view>
+    <view class="summary-row">
+      <view class="summary-card primary">
+        <text class="summary-label">{{ activeTab === 'purchase' ? '采购总额' : '销售总额' }}</text>
+        <text class="summary-value">¥{{ reportView.grandTotalAmountText }}</text>
+      </view>
+      <view class="summary-card">
+        <text class="summary-label">商品总量</text>
+        <text class="summary-value">{{ reportView.grandTotalQuantityText }}</text>
+      </view>
+      <view class="summary-card">
+        <text class="summary-label">{{ activeTab === 'purchase' ? '供应商数' : '客户数' }}</text>
+        <text class="summary-value">{{ reportView.groupCount }}</text>
+      </view>
+      <view class="summary-card">
+        <text class="summary-label">商品种类</text>
+        <text class="summary-value">{{ reportView.productTypeCount }}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{ loading }}" class="state-box">
+    <t-loading theme="circular" size="48rpx" />
+  </view>
+
+  <view wx:elif="{{ !groupTotal }}" class="state-box">
+    <t-empty description="暂无统计数据" />
+  </view>
+
+  <view wx:else class="group-list">
+    <view class="list-title">明细列表</view>
+    <view wx:for="{{ displayGroups }}" wx:key="entityId" class="group-card">
+      <view class="group-head" data-id="{{ item.entityId }}" bindtap="toggleGroup">
+        <view class="group-main">
+          <text class="group-name">{{ item.entityName }}</text>
+          <text class="group-meta">共 {{ item.productCount }} 种 · 总量 {{ item.totalQuantityText }}</text>
+        </view>
+        <view class="group-right">
+          <text class="group-amount">¥{{ item.totalAmountText }}</text>
+          <text class="group-arrow">{{ item.expanded ? '▴' : '▾' }}</text>
+        </view>
+      </view>
+      <view wx:if="{{ item.expanded }}" class="product-list">
+        <view class="product-header">
+          <text>商品</text>
+          <text>数量</text>
+          <text>金额</text>
+        </view>
+        <view wx:for="{{ item.products }}" wx:for-item="product" wx:key="productName" class="product-row">
+          <text class="product-name">{{ product.productName }}</text>
+          <text class="product-qty">{{ product.quantityText }}</text>
+          <text class="product-amount">¥{{ product.amountText }}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{ groupTotal > 0 }}" class="pagination">
+      <text class="pg-total">共 {{ groupTotal }} 条</text>
+      <picker mode="selector" range="{{ pageSizeOptions }}" value="{{ pageSizeIndex }}" bindchange="onPageSizeChange">
+        <view class="pg-size">{{ pageSize }} 条/页 ▾</view>
+      </picker>
+      <view class="pg-nav">
+        <view class="pg-btn {{ page <= 1 ? 'disabled' : '' }}" bindtap="onPrevPage">上一页</view>
+        <text class="pg-info">{{ page }}/{{ totalPages }}</text>
+        <view class="pg-btn {{ page >= totalPages ? 'disabled' : '' }}" bindtap="onNextPage">下一页</view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,6 +1,7 @@
 package com.trade.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -8,15 +9,16 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "customers")
-public class Customer {
+@Table(name = "customers", uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "customer_code"}))
+public class Customer extends TenantAwareEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(name = "customer_code", nullable = false, length = 50)
     private String customerCode;
 
     @Column(nullable = false, length = 100)

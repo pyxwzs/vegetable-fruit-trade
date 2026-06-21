@@ -1,0 +1,330 @@
+.metric-sub {
+  font-size: 22rpx;
+  color: #bbb;
+}
+
+@import '../../../styles/date-query.less';
+
+.purchase-page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  padding-bottom: 32rpx;
+  box-sizing: border-box;
+}
+
+.summary-card {
+  margin: 16rpx 24rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+}
+
+.summary-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.summary-metrics {
+  display: flex;
+  align-items: stretch;
+}
+
+.metric-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 0;
+}
+
+.metric-divider {
+  width: 1rpx;
+  background: #eee;
+  margin: 0 12rpx;
+}
+
+.metric-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.metric-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.metric-value.blue {
+  color: #0052d9;
+}
+
+.metric-value.danger {
+  color: #e34d59;
+}
+
+.metric-hint {
+  font-size: 22rpx;
+  color: #0052d9;
+}
+
+.pending-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16rpx 24rpx 0;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(90deg, #fff7e8 0%, #fff 100%);
+  border: 1rpx solid #ffe7ba;
+  border-radius: 16rpx;
+  font-size: 26rpx;
+  color: #ad6800;
+}
+
+.pending-left {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex: 1;
+}
+
+.pending-icon {
+  font-size: 28rpx;
+}
+
+.pending-link {
+  color: #0052d9;
+  font-size: 26rpx;
+  flex-shrink: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 24rpx 0;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 0;
+  height: 64rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+}
+
+.search-icon {
+  font-size: 26rpx;
+  margin-right: 8rpx;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 64rpx;
+  font-size: 26rpx;
+  color: #333;
+}
+
+.search-clear {
+  flex-shrink: 0;
+  width: 36rpx;
+  height: 36rpx;
+  line-height: 34rpx;
+  text-align: center;
+  font-size: 32rpx;
+  color: #999;
+}
+
+.filter-select {
+  flex-shrink: 0;
+  height: 64rpx;
+  min-width: 128rpx;
+  padding: 0 20rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  font-size: 26rpx;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.filter-arrow {
+  font-size: 20rpx;
+  color: #999;
+}
+
+.card-list {
+  padding: 16rpx 24rpx 0;
+}
+
+.order-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.head-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.head-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10rpx;
+  flex-shrink: 0;
+}
+
+.supplier-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+  margin-bottom: 6rpx;
+}
+
+.order-date {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.card-amount {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #0052d9;
+  line-height: 1.2;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  justify-content: flex-end;
+}
+
+.card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  line-height: 1.4;
+}
+
+.info-row .k {
+  width: 120rpx;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.info-row .v {
+  flex: 1;
+  color: #333;
+  text-align: right;
+}
+
+.info-row .v.mono {
+  font-family: Menlo, Monaco, monospace;
+  font-size: 24rpx;
+}
+
+.info-row .v.danger {
+  color: #e34d59;
+  font-weight: 600;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f5f5f5;
+}
+
+.state-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 120rpx 0;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 8rpx;
+  padding: 24rpx 0 16rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.pg-total {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.pg-size {
+  font-size: 24rpx;
+  color: #333;
+  background: #f5f6f8;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.pg-nav {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-left: auto;
+}
+
+.pg-btn {
+  font-size: 24rpx;
+  color: #0052d9;
+  padding: 8rpx 12rpx;
+}
+
+.pg-btn.disabled {
+  color: #ccc;
+  pointer-events: none;
+}
+
+.pg-info {
+  font-size: 24rpx;
+  color: #666;
+  min-width: 72rpx;
+  text-align: center;
+}

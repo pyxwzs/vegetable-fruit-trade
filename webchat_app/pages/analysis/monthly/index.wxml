@@ -1,0 +1,192 @@
+<view class="recon-page">
+  <view class="tab-bar">
+    <view
+      wx:for="{{ tabs }}"
+      wx:key="key"
+      class="tab-item {{ activeTab === item.key ? 'active' : '' }}"
+      data-key="{{ item.key }}"
+      bindtap="onTabChange"
+    >{{ item.label }}</view>
+  </view>
+
+  <view class="toolbar">
+    <picker class="entity-picker" mode="selector" range="{{ currentPanel.entityOptions }}" range-key="name" value="{{ currentPanel.entityIndex }}" bindchange="onEntityChange">
+      <view class="tool-picker entity">{{ currentPanel.entityOptions[currentPanel.entityIndex].name }} ▾</view>
+    </picker>
+    <view class="toolbar-row">
+      <picker mode="selector" range="{{ yearOptions }}" value="{{ currentPanel.yearIndex }}" bindchange="onYearChange">
+        <view class="tool-picker">{{ yearOptions[currentPanel.yearIndex] }}年 ▾</view>
+      </picker>
+      <picker wx:if="{{ currentPanel.viewMode === 'month' }}" mode="selector" range="{{ monthOptions }}" range-key="label" value="{{ currentPanel.monthIndex }}" bindchange="onMonthChange">
+        <view class="tool-picker">{{ monthOptions[currentPanel.monthIndex].label }} ▾</view>
+      </picker>
+      <view class="mode-tabs">
+        <view class="mode-tab {{ currentPanel.viewMode === 'year' ? 'active' : '' }}" data-mode="year" bindtap="onViewModeChange">按年</view>
+        <view class="mode-tab {{ currentPanel.viewMode === 'month' ? 'active' : '' }}" data-mode="month" bindtap="onViewModeChange">按月</view>
+      </view>
+      <view class="export-btn" bindtap="onExport">{{ currentPanel.exportLabel }}</view>
+    </view>
+  </view>
+
+  <!-- 未选对象：各供应商/客户汇总 -->
+  <view wx:if="{{ !currentPanel.entityId }}" class="section">
+    <view class="section-title">
+      <text>{{ currentPanel.periodTitle }} · 各{{ currentPanel.entityLabel }}{{ currentPanel.isPurchase ? '应付' : '应收' }}</text>
+      <text class="total-hint">合计{{ currentPanel.pendingLabel }} ¥{{ currentPanel.partnerPendingText }}</text>
+    </view>
+    <view wx:if="{{ currentPanel.displayRows.length }}" class="partner-list">
+      <view
+        wx:for="{{ currentPanel.displayRows }}"
+        wx:key="entityId"
+        class="partner-card"
+        data-id="{{ item.entityId }}"
+        bindtap="onSelectPartner"
+      >
+        <view class="partner-name">{{ item.name }}</view>
+        <view class="partner-metrics">
+          <view class="metric"><text class="k">单数</text><text class="v">{{ item.orderCount }}</text></view>
+          <view class="metric"><text class="k">{{ currentPanel.amountLabel }}</text><text class="v">¥{{ item.totalAmountText }}</text></view>
+          <view class="metric"><text class="k">{{ currentPanel.settledLabel }}</text><text class="v">¥{{ item.settledAmountText }}</text></view>
+          <view class="metric"><text class="k">{{ currentPanel.pendingLabel }}</text><text class="v {{ item.hasPending ? 'unpaid' : '' }}">¥{{ item.pendingAmountText }}</text></view>
+        </view>
+      </view>
+    </view>
+    <t-empty wx:else description="暂无数据" />
+    <view wx:if="{{ currentPanel.displayRows.length }}" class="hint">点击某{{ currentPanel.entityLabel }}查看明细</view>
+  </view>
+
+  <!-- 已选对象 + 按年 -->
+  <view wx:elif="{{ currentPanel.viewMode === 'year' }}" class="section">
+    <view class="section-title name-wrap">{{ currentPanel.entityName }} · {{ currentPanel.year }}年 各月汇总</view>
+    <view wx:if="{{ currentPanel.displayRows.length }}" class="table-card">
+      <view class="table-head row-summary">
+        <text>月份</text>
+        <text>单数</text>
+        <text>{{ currentPanel.amountLabel }}</text>
+        <text>{{ currentPanel.pendingLabel }}</text>
+      </view>
+      <view
+        wx:for="{{ currentPanel.displayRows }}"
+        wx:key="month"
+        class="table-row row-summary"
+        data-month="{{ item.month }}"
+        bindtap="onSelectMonth"
+      >
+        <text class="{{ item.month === currentPanel.selectedMonth ? 'active-row' : '' }}">{{ item.month }}月</text>
+        <text>{{ item.orderCount }}</text>
+        <text>¥{{ item.totalAmountText }}</text>
+        <text class="{{ item.hasPending ? 'unpaid' : '' }}">¥{{ item.pendingAmountText }}</text>
+      </view>
+    </view>
+    <t-empty wx:else description="该年度暂无记录" />
+
+    <view wx:if="{{ currentPanel.detailDays.length }}" class="detail-section">
+      <view class="section-title">品种明细 · {{ currentPanel.selectedMonth }}月</view>
+      <block wx:for="{{ currentPanel.detailDays }}" wx:for-item="day" wx:key="date">
+        <view class="day-block">
+          <view class="day-head">
+            <text class="day-date">{{ day.date }}</text>
+            <text class="day-total">当日 ¥{{ day.totalText }}</text>
+          </view>
+          <view class="product-table">
+            <view class="product-header">
+              <text>品种</text><text>单价</text><text>重量</text><text>金额(元)</text>
+            </view>
+            <view wx:for="{{ day.items }}" wx:for-item="row" wx:key="index" class="product-row">
+              <text class="product-name">{{ row.productName }}</text>
+              <text>{{ row.priceText }}</text>
+              <text>{{ row.qtyText }}</text>
+              <text class="amount">¥{{ row.amountText }}</text>
+            </view>
+          </view>
+        </view>
+      </block>
+      <view class="month-total">
+        <text>{{ currentPanel.detailTotalLabel }}</text>
+        <text class="total-value">¥{{ currentPanel.detailTotalText }}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 已选对象 + 按月 -->
+  <view wx:else class="section">
+    <view class="section-title name-wrap">{{ currentPanel.entityName }} · {{ currentPanel.year }}年{{ currentPanel.month }}月 每日汇总</view>
+    <view wx:if="{{ currentPanel.displayRows.length }}" class="table-card">
+      <view class="table-head row-daily">
+        <text>日期</text>
+        <text>单数</text>
+        <text>金额</text>
+        <text>{{ currentPanel.pendingLabel }}</text>
+      </view>
+      <view
+        wx:for="{{ currentPanel.displayRows }}"
+        wx:key="date"
+        class="table-row row-daily"
+        data-day="{{ item.date }}"
+        bindtap="onSelectDay"
+      >
+        <text class="{{ item.date === currentPanel.selectedDay ? 'active-row' : '' }}">{{ item.date }}</text>
+        <text>{{ item.orderCount }}</text>
+        <text>¥{{ item.totalAmountText }}</text>
+        <text class="{{ item.hasPending ? 'unpaid' : '' }}">¥{{ item.pendingAmountText }}</text>
+      </view>
+    </view>
+    <t-empty wx:else description="该月暂无记录" />
+
+    <view wx:if="{{ currentPanel.dailyRows.length }}" class="day-filter">
+      <text class="date-tag {{ !currentPanel.selectedDay ? 'active' : '' }}" data-day="" bindtap="onSelectDay">全月</text>
+      <text
+        wx:for="{{ currentPanel.displayRows }}"
+        wx:key="date"
+        class="date-tag {{ currentPanel.selectedDay === item.date ? 'active' : '' }}"
+        data-day="{{ item.date }}"
+        bindtap="onSelectDay"
+      >{{ item.dayLabel }}</text>
+    </view>
+
+    <view wx:if="{{ currentPanel.detailDays.length }}" class="detail-section">
+      <view class="section-title">
+        品种明细
+        <text wx:if="{{ currentPanel.selectedDay }}" class="sub">· {{ currentPanel.selectedDay }}</text>
+        <text wx:else class="sub">· {{ currentPanel.month }}月全月</text>
+      </view>
+      <block wx:for="{{ currentPanel.detailDays }}" wx:for-item="day" wx:key="date">
+        <view class="day-block">
+          <view class="day-head">
+            <text class="day-date">{{ day.date }}</text>
+            <text class="day-total">当日 ¥{{ day.totalText }}</text>
+          </view>
+          <view class="product-table">
+            <view class="product-header">
+              <text>品种</text><text>单价</text><text>重量</text><text>金额(元)</text>
+            </view>
+            <view wx:for="{{ day.items }}" wx:for-item="row" wx:key="index" class="product-row">
+              <text class="product-name">{{ row.productName }}</text>
+              <text>{{ row.priceText }}</text>
+              <text>{{ row.qtyText }}</text>
+              <text class="amount">¥{{ row.amountText }}</text>
+            </view>
+          </view>
+        </view>
+      </block>
+      <view class="month-total">
+        <text>{{ currentPanel.detailTotalLabel }}</text>
+        <text class="total-value">¥{{ currentPanel.detailTotalText }}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{ currentPanel.totalPages > 1 || currentPanel.displayRows.length }}" class="pagination">
+    <text class="pg-total">共 {{ currentPanel.listMode === 'partner' ? currentPanel.partnerRows.length : (currentPanel.listMode === 'summary' ? currentPanel.summaryRows.length : currentPanel.dailyRows.length) }} 条</text>
+    <picker mode="selector" range="{{ pageSizeOptions }}" value="{{ currentPanel.pageSizeIndex }}" bindchange="onPageSizeChange">
+      <view class="pg-size">{{ currentPanel.pageSize }} 条/页 ▾</view>
+    </picker>
+    <view class="pg-nav">
+      <view class="pg-btn {{ currentPanel.page <= 1 ? 'disabled' : '' }}" bindtap="onPrevPage">上一页</view>
+      <text class="pg-info">{{ currentPanel.page }}/{{ currentPanel.totalPages }}</text>
+      <view class="pg-btn {{ currentPanel.page >= currentPanel.totalPages ? 'disabled' : '' }}" bindtap="onNextPage">下一页</view>
+    </view>
+  </view>
+
+  <t-loading wx:if="{{ loading }}" theme="circular" size="40rpx" class="loading" />
+</view>

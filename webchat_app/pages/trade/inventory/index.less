@@ -1,0 +1,101 @@
+@import '../purchase/index.less';
+
+.inventory-page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  padding-bottom: 32rpx;
+  box-sizing: border-box;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.summary-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  padding: 16rpx 12rpx;
+  background: #fafafa;
+  border-radius: 16rpx;
+}
+
+.summary-cell.tap:active {
+  opacity: 0.88;
+}
+
+.cell-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.cell-value {
+  font-size: 32rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.cell-value.purple {
+  color: #9a60b4;
+}
+
+.cell-value.blue {
+  color: #0052d9;
+}
+
+.cell-value.green {
+  color: #2ba471;
+}
+
+.cell-value.danger {
+  color: #e34d59;
+}
+
+.cell-sub {
+  font-size: 22rpx;
+  color: #bbb;
+}
+
+.filter-text {
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inventory-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+}
+
+.product-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+  margin-bottom: 6rpx;
+}
+
+.product-meta {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.card-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #9a60b4;
+  line-height: 1.2;
+}
+
+.info-row .v.strong {
+  font-weight: 600;
+  color: #1a1a1a;
+}

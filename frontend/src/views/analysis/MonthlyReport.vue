@@ -2,11 +2,11 @@
   <div class="reconciliation">
     <el-tabs v-model="activeTab" type="border-card" @tab-change="onTabChange">
 
-      <el-tab-pane label="农户对账" name="purchase">
+      <el-tab-pane label="供应商对账" name="purchase">
         <ReconciliationPanel
           type="purchase"
           :entities="suppliers"
-          entity-label="农户"
+          entity-label="供应商"
           :entity-name="entityName('purchase')"
           v-model:entity-id="purchaseEntityId"
           v-model:year="purchaseYear"
@@ -62,11 +62,14 @@ import {
   getMonthlyPurchase, getMonthlySales,
   getPurchaseItems, getSalesItems,
   getDailyPurchaseDetail, getDailySalesDetail,
-  getPurchasePartners, getSalesPartners
+  getPurchasePartners, getSalesPartners,
+  exportPurchasePartners, exportSalesPartners,
+  exportPurchaseMonth, exportPurchaseYear,
+  exportSalesMonth, exportSalesYear
 } from '@/api/analytics'
 import { getSuppliers } from '@/api/supplier'
 import { getCustomers } from '@/api/customer'
-import { downloadMonthExcel, downloadYearExcel, downloadPartnerListExcel } from '@/utils/reconciliationExport'
+import { usePageRefresh } from '@/composables/usePageRefresh'
 
 const activeTab = ref('purchase')
 const currentYear = new Date().getFullYear()
@@ -141,9 +144,13 @@ const loadPurchase = async () => {
         supplierId: purchaseEntityId.value
       })).data
       purchaseDaily.value = null
-      purchaseItems.value = await loadMonthItems(
-        'purchase', purchaseYear.value, purchaseSelectedMonth.value, purchaseEntityId.value
-      )
+      const months = purchaseSummary.value?.rows?.map(r => r.month) || []
+      if (months.length && !months.includes(purchaseSelectedMonth.value)) {
+        purchaseSelectedMonth.value = months[0]
+      }
+      purchaseItems.value = months.length
+        ? await loadMonthItems('purchase', purchaseYear.value, purchaseSelectedMonth.value, purchaseEntityId.value)
+        : []
     } else {
       purchaseSummary.value = null
       purchaseDaily.value = (await getDailyPurchaseDetail({
@@ -183,9 +190,13 @@ const loadSales = async () => {
         customerId: salesEntityId.value
       })).data
       salesDaily.value = null
-      salesItems.value = await loadMonthItems(
-        'sales', salesYear.value, salesSelectedMonth.value, salesEntityId.value
-      )
+      const months = salesSummary.value?.rows?.map(r => r.month) || []
+      if (months.length && !months.includes(salesSelectedMonth.value)) {
+        salesSelectedMonth.value = months[0]
+      }
+      salesItems.value = months.length
+        ? await loadMonthItems('sales', salesYear.value, salesSelectedMonth.value, salesEntityId.value)
+        : []
     } else {
       salesSummary.value = null
       salesDaily.value = (await getDailySalesDetail({
@@ -248,36 +259,35 @@ const exportPurchase = async () => {
       ElMessage.warning('暂无数据')
       return
     }
-    const label = purchaseViewMode.value === 'year'
-      ? `${purchaseYear.value}年`
-      : `${purchaseYear.value}年${purchaseMonth.value}月`
-    downloadPartnerListExcel(purchasePartnerReport.value, { type: 'purchase', periodLabel: label })
-    ElMessage.success('导出成功')
+    const params = { year: purchaseYear.value }
+    if (purchaseViewMode.value === 'month') params.month = purchaseMonth.value
+    try {
+      await exportPurchasePartners(params)
+      ElMessage.success('导出成功')
+    } catch { ElMessage.error('导出失败') }
     return
   }
 
   if (purchaseViewMode.value === 'year') {
     purchaseLoading.value = true
     try {
-      await downloadYearExcel(
-        (year, month) => loadMonthItems('purchase', year, month, purchaseEntityId.value),
-        { entityName: entityName('purchase'), year: purchaseYear.value, type: 'purchase' }
-      )
+      await exportPurchaseYear({ supplierId: purchaseEntityId.value, year: purchaseYear.value })
       ElMessage.success('导出成功')
-    } catch {
-      ElMessage.error('导出失败')
+    } catch (e) {
+      ElMessage.error(e?.response?.data?.message || e?.message || '导出失败')
     } finally {
       purchaseLoading.value = false
     }
   } else {
     if (!purchaseItems.value.length) { ElMessage.warning('暂无数据'); return }
-    downloadMonthExcel(purchaseItems.value, {
-      entityName: entityName('purchase'),
-      year: purchaseYear.value,
-      month: purchaseMonth.value,
-      type: 'purchase'
-    })
-    ElMessage.success('导出成功')
+    try {
+      await exportPurchaseMonth({
+        supplierId: purchaseEntityId.value,
+        year: purchaseYear.value,
+        month: purchaseMonth.value
+      })
+      ElMessage.success('导出成功')
+    } catch { ElMessage.error('导出失败') }
   }
 }
 
@@ -287,43 +297,51 @@ const exportSales = async () => {
       ElMessage.warning('暂无数据')
       return
     }
-    const label = salesViewMode.value === 'year'
-      ? `${salesYear.value}年`
-      : `${salesYear.value}年${salesMonth.value}月`
-    downloadPartnerListExcel(salesPartnerReport.value, { type: 'sales', periodLabel: label })
-    ElMessage.success('导出成功')
+    const params = { year: salesYear.value }
+    if (salesViewMode.value === 'month') params.month = salesMonth.value
+    try {
+      await exportSalesPartners(params)
+      ElMessage.success('导出成功')
+    } catch { ElMessage.error('导出失败') }
     return
   }
 
   if (salesViewMode.value === 'year') {
     salesLoading.value = true
     try {
-      await downloadYearExcel(
-        (year, month) => loadMonthItems('sales', year, month, salesEntityId.value),
-        { entityName: entityName('sales'), year: salesYear.value, type: 'sales' }
-      )
+      await exportSalesYear({ customerId: salesEntityId.value, year: salesYear.value })
       ElMessage.success('导出成功')
-    } catch {
-      ElMessage.error('导出失败')
+    } catch (e) {
+      ElMessage.error(e?.response?.data?.message || e?.message || '导出失败')
     } finally {
       salesLoading.value = false
     }
   } else {
     if (!salesItems.value.length) { ElMessage.warning('暂无数据'); return }
-    downloadMonthExcel(salesItems.value, {
-      entityName: entityName('sales'),
-      year: salesYear.value,
-      month: salesMonth.value,
-      type: 'sales'
-    })
-    ElMessage.success('导出成功')
+    try {
+      await exportSalesMonth({
+        customerId: salesEntityId.value,
+        year: salesYear.value,
+        month: salesMonth.value
+      })
+      ElMessage.success('导出成功')
+    } catch { ElMessage.error('导出失败') }
   }
 }
 
-const onTabChange = () => {
+const onTabChange = (name) => {
   purchaseSelectedDay.value = ''
   salesSelectedDay.value = ''
+  if (name === 'purchase') loadPurchase()
+  else loadSales()
 }
+
+const refreshActiveTab = () => {
+  if (activeTab.value === 'purchase') loadPurchase()
+  else loadSales()
+}
+
+usePageRefresh(refreshActiveTab)
 
 onMounted(async () => {
   try {

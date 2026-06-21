@@ -1,0 +1,267 @@
+@import '../../trade/purchase/index.less';
+@import '../../../styles/date-query.less';
+
+.expense-page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  padding-bottom: 32rpx;
+  box-sizing: border-box;
+}
+
+.summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.add-btn {
+  font-size: 26rpx;
+  color: #ed7b2f;
+  background: #fef3e6;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+}
+
+.date-query.inline {
+  margin: 0 0 20rpx;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.mode-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  font-size: 26rpx;
+  color: #666;
+  background: #f5f6f8;
+  border-radius: 12rpx;
+}
+
+.mode-tab.active {
+  color: #ed7b2f;
+  background: #fef3e6;
+  font-weight: 600;
+}
+
+.date-picker {
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 20rpx;
+  background: #f5f6f8;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 0;
+}
+
+.metric-value.orange {
+  color: #ed7b2f;
+}
+
+.metric-value.red {
+  color: #e34d59;
+}
+
+.metric-item.tap:active {
+  opacity: 0.88;
+}
+
+.metric-hint {
+  font-size: 22rpx;
+  color: #ed7b2f;
+}
+
+.metric-sub {
+  font-size: 22rpx;
+  color: #bbb;
+}
+
+.category-breakdown {
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.breakdown-title {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 16rpx;
+}
+
+.breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.breakdown-name {
+  width: 100rpx;
+  font-size: 24rpx;
+  color: #666;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breakdown-bar-wrap {
+  flex: 1;
+  height: 16rpx;
+  background: #f5f6f8;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.breakdown-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f5a623, #ed7b2f);
+  border-radius: 8rpx;
+  min-width: 4rpx;
+}
+
+.breakdown-right {
+  width: 140rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+  flex-shrink: 0;
+}
+
+.breakdown-percent {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #ed7b2f;
+  line-height: 1.2;
+}
+
+.breakdown-amount {
+  font-size: 22rpx;
+  color: #666;
+  line-height: 1.2;
+}
+
+.period-tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 24rpx 8rpx;
+  padding: 12rpx 20rpx;
+  background: #ecf2fe;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  color: #0052d9;
+}
+
+.period-clear {
+  font-size: 32rpx;
+  color: #999;
+  padding: 0 8rpx;
+}
+
+.expense-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+}
+
+.expense-category {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+  margin-bottom: 6rpx;
+}
+
+.expense-date {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.expense-amount {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #e34d59;
+  line-height: 1.2;
+}
+
+.pg-btn {
+  color: #ed7b2f;
+}
+
+.form-panel {
+  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.form-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  margin-bottom: 24rpx;
+}
+
+.form-field {
+  margin-bottom: 20rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.form-input,
+.form-picker {
+  height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 20rpx;
+  background: #f5f6f8;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.form-input-mt {
+  margin-top: 12rpx;
+}
+
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.category-chip {
+  padding: 10rpx 20rpx;
+  font-size: 24rpx;
+  color: #666;
+  background: #f5f6f8;
+  border-radius: 24rpx;
+  border: 1rpx solid transparent;
+}
+
+.category-chip.active {
+  color: #ed7b2f;
+  background: #fef3e6;
+  border-color: #f5a623;
+}
+
+.form-picker {
+  box-sizing: border-box;
+}

@@ -36,21 +36,26 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    public Page<Product> getProducts(String keyword, Pageable pageable) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return productRepository.findAll(pageable);
-        }
-        String kw = "%" + keyword.trim() + "%";
+    public Page<Product> getProducts(String keyword, String status, Pageable pageable) {
         return productRepository.findAll((root, query, cb) -> {
             List<Predicate> ps = new ArrayList<>();
-            ps.add(cb.like(root.get("name"), kw));
-            ps.add(cb.like(root.get("category"), kw));
-            return cb.or(ps.toArray(new Predicate[0]));
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String kw = "%" + keyword.trim() + "%";
+                ps.add(cb.or(cb.like(root.get("name"), kw), cb.like(root.get("category"), kw)));
+            }
+            if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+                ps.add(cb.equal(root.get("status"), Product.ProductStatus.valueOf(status)));
+            }
+            return ps.isEmpty() ? cb.conjunction() : cb.and(ps.toArray(new Predicate[0]));
         }, pageable);
     }
 
     public List<Product> getAllEnabledProducts() {
         return productRepository.findAllEnabled();
+    }
+
+    public List<String> getDistinctCategories() {
+        return productRepository.findDistinctCategories();
     }
 
     public Product getProductById(Long id) {

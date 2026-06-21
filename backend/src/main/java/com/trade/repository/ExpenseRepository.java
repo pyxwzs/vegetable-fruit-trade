@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
@@ -33,4 +34,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     @Query("SELECT COALESCE(SUM(e.amount), 0) FROM Expense e " +
            "WHERE YEAR(e.expenseDate) = :year AND MONTH(e.expenseDate) = :month")
     BigDecimal sumByMonth(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT DISTINCT e.category FROM Expense e WHERE e.category <> '' ORDER BY e.category")
+    List<String> findDistinctCategories();
 }

@@ -206,6 +206,67 @@ public class AnalyticsService {
         return buildPartnerListReport(year, month, raw);
     }
 
+    /** 供应商视角：各供应商提供的商品、数量与金额汇总 */
+    public PartnerProductStatReportDTO getSupplierProductStats(int year, Integer month, Long supplierId) {
+        int m = month != null ? month : 0;
+        List<Object[]> raw = purchaseOrderItemRepository.supplierProductStats(year, m, supplierId);
+        return buildPartnerProductStatReport(year, month, raw);
+    }
+
+    /** 客户视角：销售给各客户的商品、数量与金额汇总 */
+    public PartnerProductStatReportDTO getCustomerProductStats(int year, Integer month, Long customerId) {
+        int m = month != null ? month : 0;
+        List<Object[]> raw = salesOrderItemRepository.customerProductStats(year, m, customerId);
+        return buildPartnerProductStatReport(year, month, raw);
+    }
+
+    private PartnerProductStatReportDTO buildPartnerProductStatReport(int year, Integer month, List<Object[]> rawRows) {
+        PartnerProductStatReportDTO report = new PartnerProductStatReportDTO();
+        report.setYear(year);
+        report.setMonth(month);
+        if (rawRows == null || rawRows.isEmpty()) {
+            return report;
+        }
+
+        Map<Long, PartnerProductGroupDTO> groupMap = new LinkedHashMap<>();
+        BigDecimal grandAmount = BigDecimal.ZERO;
+        BigDecimal grandQty = BigDecimal.ZERO;
+
+        for (Object[] r : rawRows) {
+            Long entityId = r[0] instanceof Number ? ((Number) r[0]).longValue() : null;
+            String entityName = r[1] != null ? r[1].toString() : "";
+            Long productId = r[2] instanceof Number ? ((Number) r[2]).longValue() : null;
+            String productName = r[3] != null ? r[3].toString() : "";
+            String unit = r[4] != null ? r[4].toString() : "";
+            BigDecimal qty = toBigDecimal(r[5]);
+            BigDecimal amount = toBigDecimal(r[6]);
+
+            PartnerProductGroupDTO group = groupMap.computeIfAbsent(entityId, id -> {
+                PartnerProductGroupDTO g = new PartnerProductGroupDTO();
+                g.setEntityId(id);
+                g.setEntityName(entityName);
+                return g;
+            });
+
+            PartnerProductRowDTO row = new PartnerProductRowDTO();
+            row.setProductId(productId);
+            row.setProductName(productName);
+            row.setUnit(unit);
+            row.setQuantity(qty);
+            row.setTotalAmount(amount);
+            group.getProducts().add(row);
+            group.setTotalAmount(group.getTotalAmount().add(amount));
+            group.setTotalQuantity(group.getTotalQuantity().add(qty));
+            grandAmount = grandAmount.add(amount);
+            grandQty = grandQty.add(qty);
+        }
+
+        report.setGroups(new ArrayList<>(groupMap.values()));
+        report.setGrandTotalAmount(grandAmount);
+        report.setGrandTotalQuantity(grandQty);
+        return report;
+    }
+
     private PartnerListReportDTO buildPartnerListReport(int year, Integer month, List<Object[]> rawRows) {
         List<PartnerStatRowDTO> rows = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
@@ -331,6 +392,9 @@ public class AnalyticsService {
             Object[] r = map.get(m);
             long cnt = r != null ? ((Number) r[1]).longValue() : 0L;
             BigDecimal total = r != null ? toBigDecimal(r[2]) : BigDecimal.ZERO;
+            if (cnt <= 0 && total.compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
             BigDecimal settled = r != null ? toBigDecimal(r[3]) : BigDecimal.ZERO;
             BigDecimal pending = total.subtract(settled).max(BigDecimal.ZERO);
             rows.add(new MonthlyStatRowDTO(m, cnt, total, settled, pending));

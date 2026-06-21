@@ -28,7 +28,7 @@ public class SupplierController {
     public ApiResponse<Page<Supplier>> page(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
-            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResponse.success(supplierService.getSuppliers(keyword, status, pageable));
     }
 

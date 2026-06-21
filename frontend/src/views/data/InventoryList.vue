@@ -66,7 +66,7 @@
           <template #tag>
             <el-tag v-if="row.product?.category" type="info" size="small">{{ row.product.category }}</el-tag>
           </template>
-          <div class="card-row"><span class="label">库存</span><span class="value">{{ row.quantity }} {{ row.product?.unit }}</span></div>
+          <div class="card-row"><span class="label">库存</span><span class="value">{{ Number(row.quantity).toFixed(1) }} {{ row.product?.unit }}</span></div>
         </MobileListCard>
         <el-empty v-if="!loading && !inventories.length" description="暂无数据" />
       </div>
@@ -75,7 +75,7 @@
           <el-table-column prop="product.name" label="商品名称" min-width="160" />
           <el-table-column prop="product.category" label="分类" width="100" />
           <el-table-column label="当前库存" width="120" align="right">
-            <template #default="{ row }">{{ Number(row.quantity).toFixed(2) }} {{ row.product?.unit }}</template>
+            <template #default="{ row }">{{ Number(row.quantity).toFixed(1) }} {{ row.product?.unit }}</template>
           </el-table-column>
         </el-table>
       </div>
@@ -180,7 +180,7 @@ const barOption = computed(() => {
       trigger: 'axis',
       formatter: params => {
         const row = sorted[params[0].dataIndex]
-        return `${params[0].name}: ¥${Number(params[0].value).toFixed(2)}<br/>${Number(row?.quantity || 0)} ${row?.unit || ''}`
+        return `${params[0].name}: ¥${Number(params[0].value).toFixed(2)}<br/>${Number(row?.quantity || 0).toFixed(1)} ${row?.unit || ''}`
       }
     },
     grid: { left: 80, right: 30, top: 10, bottom: 10 },
@@ -205,7 +205,7 @@ const barOption = computed(() => {
 const loading = ref(false)
 const inventories = ref([])
 const page = ref(1)
-const size = ref(10)
+const size = ref(5)
 const total = ref(0)
 const searchKeyword = ref('')
 

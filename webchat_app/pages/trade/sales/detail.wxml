@@ -1,0 +1,67 @@
+<wxs src="../../../utils/format.wxs" module="f" />
+<view class="detail-page" wx:if="{{ order && !loading }}">
+  <view class="hero-card">
+    <view class="hero-top">
+      <view class="hero-partner">{{ order.customerName }}</view>
+      <view class="hero-tags">
+        <t-tag theme="{{ order.statusTheme }}" variant="light">{{ order.statusText }}</t-tag>
+        <t-tag theme="{{ order.paymentTheme }}" variant="light">{{ order.paymentText }}</t-tag>
+      </view>
+    </view>
+    <view class="hero-amount">¥{{ order.totalText }}</view>
+    <view class="hero-sub">单号 {{ order.orderNo }} · {{ order.dateText }}</view>
+    <view class="hero-metrics">
+      <view class="metric">
+        <text class="metric-label">已收</text>
+        <text class="metric-value">¥{{ order.receivedText }}</text>
+      </view>
+      <view class="metric-divider" />
+      <view class="metric">
+        <text class="metric-label">未收</text>
+        <text class="metric-value {{ unpaid > 0 ? 'danger' : '' }}">¥{{ unpaidText }}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">商品明细</view>
+    <view class="item-card" wx:for="{{ items }}" wx:key="id">
+      <view class="item-name">{{ item.name }}</view>
+      <view class="item-meta">
+        <text>{{ item.qty }}{{ item.unit }} × ¥{{ item.priceText }}</text>
+        <text class="item-amount">¥{{ item.amountText }}</text>
+      </view>
+    </view>
+    <view wx:if="{{ !items.length }}" class="empty-tip">暂无明细</view>
+  </view>
+
+  <view class="section" wx:if="{{ payments.length }}">
+    <view class="section-title">收款记录</view>
+    <view class="pay-card" wx:for="{{ payments }}" wx:key="id">
+      <view class="pay-left">
+        <text class="pay-date">{{ item.dateText }}</text>
+        <text class="pay-method">{{ item.paymentMethod || '—' }}</text>
+      </view>
+      <text class="pay-amount">¥{{ item.amountText }}</text>
+    </view>
+  </view>
+</view>
+
+<view class="action-bar" wx:if="{{ order && (canComplete || canCollect || canCancel) }}">
+  <t-button wx:if="{{ canCancel }}" theme="danger" variant="outline" size="medium" bindtap="onCancel">取消</t-button>
+  <t-button wx:if="{{ canCollect }}" theme="warning" variant="outline" size="medium" bindtap="openPay">收款</t-button>
+  <t-button wx:if="{{ canComplete }}" theme="primary" size="medium" bindtap="onComplete">确认出库</t-button>
+</view>
+
+<t-popup visible="{{ showPay }}" placement="bottom" bind:visible-change="closePay">
+  <view class="pay-panel">
+    <view class="pay-panel-title">登记收款</view>
+    <view class="pay-panel-hint">未收金额 ¥{{ unpaidText }}</view>
+    <t-input label="本次收款" type="digit" value="{{ payAmount }}" bindchange="onPayAmountChange" />
+    <t-button theme="primary" block bindtap="submitPay" t-class="pay-submit">确认收款</t-button>
+  </view>
+</t-popup>
+
+<view wx:if="{{ loading }}" class="loading-wrap">
+  <t-loading theme="circular" size="48rpx" />
+</view>

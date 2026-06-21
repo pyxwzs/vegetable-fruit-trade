@@ -1,0 +1,57 @@
+<t-navbar class="login-nav" title="{{ siteName }}" />
+<view class="login-page">
+  <view class="login-bg" />
+
+  <view class="login-hero">
+    <view class="brand-logo">
+      <text class="brand-emoji">🥬</text>
+    </view>
+    <view class="brand-name">{{ siteName }}</view>
+    <view class="brand-slogan">进销存 · 对账 · 经营一目了然</view>
+  </view>
+
+  <view class="login-panel">
+    <view class="feature-row">
+      <view wx:for="{{ features }}" wx:key="text" class="feature-item">
+        <view class="feature-icon-wrap">
+          <t-icon name="{{ item.icon }}" size="44rpx" color="#0052d9" />
+        </view>
+        <text class="feature-text">{{ item.text }}</text>
+      </view>
+    </view>
+
+    <view class="panel-divider" />
+
+    <view class="agree-row">
+      <t-radio-group
+        allow-uncheck
+        borderless
+        value="{{ radioValue }}"
+        bind:change="onCheckChange"
+      >
+        <t-radio
+          class="agree-radio"
+          label="同意使用本系统管理租户业务数据"
+          value="agree"
+        />
+      </t-radio-group>
+    </view>
+
+    <button
+      class="wx-btn {{ loading ? 'loading' : '' }}"
+      loading="{{ loading }}"
+      disabled="{{ loading }}"
+      bindtap="handleWxLogin"
+    >
+      <image wx:if="{{ !loading }}" class="wx-icon" src="/static/icon_wx.png" mode="aspectFit" />
+      <text>微信一键登录</text>
+    </button>
+
+    <view class="register-row" bindtap="goRegister">
+      <text class="register-hint">还没有租户账号？</text>
+      <text class="register-link">邀请码注册</text>
+    </view>
+  </view>
+
+  <view class="login-footer">安全登录 · 数据仅用于您的租户业务</view>
+</view>

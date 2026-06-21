@@ -23,7 +23,7 @@ public class ReturnRequestController {
     public ApiResponse<Page<ReturnRequestDTO>> list(
             @RequestParam(required = false) String kind,
             @RequestParam(required = false) String status,
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResponse.success(returnRequestService.getRequests(kind, status, pageable));
     }
 

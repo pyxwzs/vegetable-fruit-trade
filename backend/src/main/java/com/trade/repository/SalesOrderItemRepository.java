@@ -41,4 +41,16 @@ public interface SalesOrderItemRepository extends JpaRepository<SalesOrderItem, 
            "WHERE YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status <> 'CANCELLED' " +
            "ORDER BY o.orderDate, o.customer.name, i.product.name")
     List<Object[]> itemDetailAll(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT o.customer.id, o.customer.name, i.product.id, i.product.name, i.product.unit, " +
+           "COALESCE(SUM(i.quantity), 0), COALESCE(SUM(i.amount), 0) " +
+           "FROM SalesOrderItem i JOIN i.salesOrder o " +
+           "WHERE o.status <> 'CANCELLED' AND YEAR(o.orderDate) = :year " +
+           "AND (:month = 0 OR MONTH(o.orderDate) = :month) " +
+           "AND (:customerId IS NULL OR o.customer.id = :customerId) " +
+           "GROUP BY o.customer.id, o.customer.name, i.product.id, i.product.name, i.product.unit " +
+           "ORDER BY o.customer.name, SUM(i.amount) DESC")
+    List<Object[]> customerProductStats(@Param("year") int year,
+                                        @Param("month") int month,
+                                        @Param("customerId") Long customerId);
 }

@@ -34,4 +34,30 @@ public interface PurchaseOrderItemRepository extends JpaRepository<PurchaseOrder
            "WHERE YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month AND o.status <> 'CANCELLED' " +
            "ORDER BY o.orderDate, o.supplier.name, i.product.name")
     List<Object[]> itemDetailAll(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT o.supplier.id, o.supplier.name, i.product.id, i.product.name, i.product.unit, " +
+           "COALESCE(SUM(i.quantity), 0), COALESCE(SUM(i.amount), 0) " +
+           "FROM PurchaseOrderItem i JOIN i.purchaseOrder o " +
+           "WHERE o.status <> 'CANCELLED' AND YEAR(o.orderDate) = :year " +
+           "AND (:month = 0 OR MONTH(o.orderDate) = :month) " +
+           "AND (:supplierId IS NULL OR o.supplier.id = :supplierId) " +
+           "GROUP BY o.supplier.id, o.supplier.name, i.product.id, i.product.name, i.product.unit " +
+           "ORDER BY o.supplier.name, SUM(i.amount) DESC")
+    List<Object[]> supplierProductStats(@Param("year") int year,
+                                        @Param("month") int month,
+                                        @Param("supplierId") Long supplierId);
+
+    @Query("SELECT o.supplier.id, i.product.id, YEAR(o.orderDate), MONTH(o.orderDate), " +
+           "COALESCE(SUM(i.quantity), 0) " +
+           "FROM PurchaseOrderItem i JOIN i.purchaseOrder o " +
+           "WHERE o.status <> 'CANCELLED' " +
+           "AND YEAR(o.orderDate) = :year AND MONTH(o.orderDate) = :month " +
+           "GROUP BY o.supplier.id, i.product.id, YEAR(o.orderDate), MONTH(o.orderDate)")
+    List<Object[]> sumQuantityBySupplierProductMonth(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT o.supplier.id, i.product.id, COALESCE(SUM(i.quantity), 0) " +
+           "FROM PurchaseOrderItem i JOIN i.purchaseOrder o " +
+           "WHERE o.status <> 'CANCELLED' AND YEAR(o.orderDate) = :year " +
+           "GROUP BY o.supplier.id, i.product.id")
+    List<Object[]> sumQuantityBySupplierProductYear(@Param("year") int year);
 }

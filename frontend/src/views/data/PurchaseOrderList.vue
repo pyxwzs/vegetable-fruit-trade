@@ -65,7 +65,7 @@
       <div v-else class="table-wrap">
       <el-table :data="orders" v-loading="loading" border style="width: 100%">
         <el-table-column prop="orderNo" label="订单号" width="170" />
-        <el-table-column prop="supplier.name" label="农户" min-width="120" />
+        <el-table-column prop="supplier.name" label="供应商" min-width="120" />
         <el-table-column prop="orderDate" label="日期" width="110">
           <template #default="{ row }">{{ formatDate(row.orderDate) }}</template>
         </el-table-column>
@@ -111,8 +111,8 @@
     <!-- 新建 -->
     <el-dialog v-model="createVisible" title="新建采购单" :width="isMobile ? '94%' : '660px'" destroy-on-close>
       <el-form label-width="80px">
-        <el-form-item label="农户" required>
-          <el-select v-model="createForm.supplierId" filterable placeholder="选择农户" style="width: 100%">
+        <el-form-item label="供应商" required>
+          <el-select v-model="createForm.supplierId" filterable placeholder="选择供应商" style="width: 100%">
             <el-option v-for="s in supplierOptions" :key="s.id" :label="s.name" :value="s.id" />
           </el-select>
         </el-form-item>
@@ -143,7 +143,7 @@
                 <div class="item-row2">
                   <div class="item-field half">
                     <span class="item-label">数量</span>
-                    <el-input v-model.number="row.quantity" type="number" placeholder="0.000" style="width:100%" />
+                    <el-input v-model.number="row.quantity" type="number" placeholder="0.0" style="width:100%" />
                   </div>
                   <div class="item-field half">
                     <span class="item-label">单价(元)</span>
@@ -167,7 +167,7 @@
                 </el-table-column>
                 <el-table-column label="数量" width="120">
                   <template #default="{ row }">
-                    <el-input-number v-model="row.quantity" :min="0.001" :precision="3" style="width: 100%" />
+                    <el-input-number v-model="row.quantity" :min="0.1" :precision="1" :step="0.1" style="width: 100%" />
                   </template>
                 </el-table-column>
                 <el-table-column label="单价(元)" width="130">
@@ -201,7 +201,7 @@
       <div v-if="detailOrder" class="detail-body">
         <el-descriptions :column="isMobile ? 1 : 2" border size="small">
           <el-descriptions-item label="订单号">{{ detailOrder.orderNo }}</el-descriptions-item>
-          <el-descriptions-item label="农户">{{ detailOrder.supplier?.name }}</el-descriptions-item>
+          <el-descriptions-item label="供应商">{{ detailOrder.supplier?.name }}</el-descriptions-item>
           <el-descriptions-item label="下单日期">{{ formatDate(detailOrder.orderDate) }}</el-descriptions-item>
           <el-descriptions-item label="货物状态">{{ statusText(detailOrder.status) }}</el-descriptions-item>
           <el-descriptions-item label="总金额">¥{{ Number(detailOrder.totalAmount).toFixed(2) }}</el-descriptions-item>
@@ -222,7 +222,7 @@
               <template #default="{ row }">{{ row.product?.specification || '-' }}</template>
             </el-table-column>
             <el-table-column label="数量" width="90" align="right">
-              <template #default="{ row }">{{ Number(row.quantity).toFixed(3) }} {{ row.product?.unit }}</template>
+              <template #default="{ row }">{{ Number(row.quantity).toFixed(1) }} {{ row.product?.unit }}</template>
             </el-table-column>
             <el-table-column label="单价" width="80" align="right">
               <template #default="{ row }">¥{{ Number(row.price).toFixed(2) }}</template>
@@ -316,7 +316,7 @@ const isMobile = useIsMobile()
 const loading = ref(false)
 const orders = ref([])
 const page = ref(1)
-const size = ref(10)
+const size = ref(5)
 const total = ref(0)
 const searchKeyword = ref('')
 const status = ref('')
@@ -408,7 +408,7 @@ const removeLine = (idx) => createForm.value.items.splice(idx, 1)
 const submitCreate = async () => {
   if (createLoading.value) return
   const f = createForm.value
-  if (!f.supplierId || !f.orderDate || !f.items?.length) { ElMessage.warning('请填写农户、日期并添加明细'); return }
+  if (!f.supplierId || !f.orderDate || !f.items?.length) { ElMessage.warning('请填写供应商、日期并添加明细'); return }
   for (const line of f.items) {
     if (!line.productId || !line.quantity || !line.price) { ElMessage.warning('请完善每行商品、数量、单价'); return }
   }

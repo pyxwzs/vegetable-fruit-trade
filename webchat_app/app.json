@@ -1,0 +1,74 @@
+{
+  "pages": ["pages/launch/index", "pages/home/index", "pages/business/index", "pages/my/index"],
+  "usingComponents": {
+    "t-toast": "tdesign-miniprogram/toast/toast"
+  },
+  "subpackages": [
+    {
+      "root": "pages/login",
+      "name": "login",
+      "pages": ["login"]
+    },
+    {
+      "root": "pages/register",
+      "name": "register",
+      "pages": ["register"]
+    },
+    {
+      "root": "pages/trade",
+      "name": "trade",
+      "pages": [
+        "purchase/index",
+        "purchase/detail",
+        "sales/index",
+        "sales/detail",
+        "products/index",
+        "inventory/index"
+      ]
+    },
+    {
+      "root": "pages/partner",
+      "name": "partner",
+      "pages": ["suppliers/index", "customers/index", "expenses/index", "metrics/index"]
+    },
+    {
+      "root": "pages/analysis",
+      "name": "analysis",
+      "pages": ["monthly/index", "stats/index"]
+    },
+    {
+      "root": "pages/account",
+      "name": "account",
+      "pages": ["profile/index"]
+    },
+    {
+      "root": "pages/setting",
+      "name": "setting",
+      "pages": ["index"]
+    }
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTitleText": "果蔬配送经营管理系统",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "custom": true,
+    "list": [
+      { "pagePath": "pages/home/index", "text": "仪表盘" },
+      { "pagePath": "pages/business/index", "text": "业务" },
+      { "pagePath": "pages/my/index", "text": "我的" }
+    ]
+  },
+  "resolveAlias": {
+    "~/*": "/*"
+  },
+  "preloadRule": {
+    "pages/business/index": {
+      "network": "all",
+      "packages": ["analysis", "partner"]
+    }
+  },
+  "sitemapLocation": "sitemap.json"
+}

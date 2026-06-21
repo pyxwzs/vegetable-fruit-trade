@@ -1,0 +1,40 @@
+# 果蔬批发管理系统 · 生产环境（Docker 运行 jar）
+#
+# 使用前请先打包，并将 jar 放到与本文件同级目录：
+#   cd backend && ./mvnw clean package -DskipTests
+#   cp backend/target/vegetable-fruit-trade-1.0.0.jar .
+#
+# 配置：cp .env.example .env  填写生产项（JWT、数据库密码、微信 AppSecret 等）
+# 网络：docker network create fnos  （MySQL 与 backend 须在同一网络）
+#
+# 启动：docker compose up -d
+# 接口：http://<服务器>:8080/api
+
+services:
+  backend:
+    image: eclipse-temurin:17-jre
+    container_name: trade-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - ./vegetable-fruit-trade-1.0.0.jar:/app/app.jar:ro
+      - ./uploads:/app/uploads
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SPRING_DEVTOOLS_RESTART_ENABLED: "false"
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:-3306}/${MYSQL_DATABASE:-trade_db}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-root}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?请在 .env 中设置 MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?请在 .env 中设置 JWT_SECRET}
+      WECHAT_MINI_PROGRAM_APP_ID: ${WECHAT_MINI_PROGRAM_APP_ID:?请在 .env 中设置 WECHAT_MINI_PROGRAM_APP_ID}
+      WECHAT_MINI_PROGRAM_APP_SECRET: ${WECHAT_MINI_PROGRAM_APP_SECRET:?请在 .env 中设置 WECHAT_MINI_PROGRAM_APP_SECRET}
+      WECHAT_MINI_PROGRAM_MOCK_ENABLED: ${WECHAT_MINI_PROGRAM_MOCK_ENABLED:-false}
+      APP_UPLOAD_DIR: ${APP_UPLOAD_DIR:-uploads}
+    command: ["java", "-jar", "/app/app.jar"]
+    networks:
+      - fnos
+
+networks:
+  fnos:
+    external: true

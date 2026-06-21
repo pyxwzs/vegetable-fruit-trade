@@ -26,10 +26,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryService {
+
+    private static final String DEFAULT_WAREHOUSE_CODE = "DEFAULT";
+    private static final String DEFAULT_WAREHOUSE_NAME = "默认仓库";
 
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
@@ -40,8 +44,7 @@ public class InventoryService {
     public Inventory addStock(InventoryMovementDTO dto) {
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new BusinessException("商品不存在"));
-        Warehouse warehouse = warehouseRepository.findById(dto.getWarehouseId())
-                .orElseThrow(() -> new BusinessException("仓库不存在"));
+        Warehouse warehouse = resolveWarehouseForInbound(dto.getWarehouseId());
 
         Inventory inv = inventoryRepository.findByProductAndWarehouse(product, warehouse)
                 .orElse(null);
@@ -57,12 +60,54 @@ public class InventoryService {
         return inventoryRepository.save(inv);
     }
 
+    /** 入库：未指定仓库时使用已有仓库；若库中无任何仓库则自动创建默认仓库 */
+    @Transactional
+    public Warehouse resolveWarehouseForInbound(Long warehouseId) {
+        if (warehouseId != null) {
+            return warehouseRepository.findById(warehouseId)
+                    .orElseThrow(() -> new BusinessException("仓库不存在"));
+        }
+        Optional<Warehouse> existing = findAnyActiveWarehouse();
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        return createDefaultWarehouse();
+    }
+
+    /** 出库：须指定或存在可用仓库，不自动创建 */
+    @Transactional(readOnly = true)
+    public Warehouse requireWarehouse(Long warehouseId) {
+        if (warehouseId != null) {
+            return warehouseRepository.findById(warehouseId)
+                    .orElseThrow(() -> new BusinessException("仓库不存在"));
+        }
+        return findAnyActiveWarehouse()
+                .orElseThrow(() -> new BusinessException("暂无仓库，请先完成入库"));
+    }
+
+    private Optional<Warehouse> findAnyActiveWarehouse() {
+        return warehouseRepository.findByCode(DEFAULT_WAREHOUSE_CODE)
+                .or(() -> warehouseRepository.findByStatusOrderByIdAsc(Warehouse.WarehouseStatus.ACTIVE)
+                        .stream()
+                        .findFirst());
+    }
+
+    private Warehouse createDefaultWarehouse() {
+        return warehouseRepository.findByCode(DEFAULT_WAREHOUSE_CODE)
+                .orElseGet(() -> {
+                    Warehouse w = new Warehouse();
+                    w.setCode(DEFAULT_WAREHOUSE_CODE);
+                    w.setName(DEFAULT_WAREHOUSE_NAME);
+                    w.setStatus(Warehouse.WarehouseStatus.ACTIVE);
+                    return warehouseRepository.save(w);
+                });
+    }
+
     @Transactional
     public Inventory removeStock(InventoryMovementDTO dto) {
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new BusinessException("商品不存在"));
-        Warehouse warehouse = warehouseRepository.findById(dto.getWarehouseId())
-                .orElseThrow(() -> new BusinessException("仓库不存在"));
+        Warehouse warehouse = requireWarehouse(dto.getWarehouseId());
 
         Inventory inv = inventoryRepository.findByProductAndWarehouse(product, warehouse)
                 .orElseThrow(() -> new BusinessException("库存记录不存在"));
@@ -78,7 +123,7 @@ public class InventoryService {
     public void deductStock(Long productId, Long warehouseId, BigDecimal quantity) {
         InventoryMovementDTO dto = new InventoryMovementDTO();
         dto.setProductId(productId);
-        dto.setWarehouseId(warehouseId);
+        dto.setWarehouseId(requireWarehouse(warehouseId).getId());
         dto.setQuantity(quantity);
         removeStock(dto);
     }

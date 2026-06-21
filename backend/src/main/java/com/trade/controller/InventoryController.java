@@ -27,7 +27,7 @@ public class InventoryController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) Long warehouseId,
-            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResponse.success(inventoryService.getInventories(keyword, productId, warehouseId, pageable));
     }
 

@@ -5,8 +5,17 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
+import { useStore } from 'vuex'
 import { ElConfigProvider } from 'element-plus'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+
+const store = useStore()
+
+onMounted(() => {
+  const code = store.state.tenant.tenantCode || 'default'
+  store.dispatch('site/load', code).catch(() => {})
+})
 </script>
 
 <style>

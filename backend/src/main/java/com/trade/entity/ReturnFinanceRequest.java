@@ -1,6 +1,7 @@
 package com.trade.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
@@ -8,9 +9,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "return_finance_requests")
-public class ReturnFinanceRequest {
+public class ReturnFinanceRequest extends TenantAwareEntity {
 
     public enum Kind {
         PURCHASE, SALES

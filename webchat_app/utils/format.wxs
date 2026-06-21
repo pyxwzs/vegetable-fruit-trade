@@ -1,0 +1,30 @@
+/** WXML 模板内金额/日期格式化（WXML 不能调用 Page 上的 JS 函数） */
+function fmtMoney(value) {
+  var n = parseFloat(value);
+  if (isNaN(n)) return '0.00';
+  return n.toFixed(2);
+}
+
+function fmtDate(value) {
+  if (value === undefined || value === null || value === '') return '-';
+  var s = '' + value;
+  return s.length >= 10 ? s.substring(0, 10) : s;
+}
+
+function money(value) {
+  return '¥' + fmtMoney(value);
+}
+
+function signedMoney(value) {
+  var n = parseFloat(value);
+  if (isNaN(n)) return '¥0.00';
+  var prefix = n >= 0 ? '+' : '';
+  return prefix + '¥' + fmtMoney(n);
+}
+
+module.exports = {
+  fmtMoney: fmtMoney,
+  fmtDate: fmtDate,
+  money: money,
+  signedMoney: signedMoney,
+};

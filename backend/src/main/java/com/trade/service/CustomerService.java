@@ -23,7 +23,7 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final SalesOrderRepository salesOrderRepository;
 
-    public Page<Customer> getCustomers(String keyword, Pageable pageable) {
+    public Page<Customer> getCustomers(String keyword, String status, Pageable pageable) {
         Specification<Customer> spec = (root, query, cb) -> {
             List<Predicate> ps = new ArrayList<>();
             if (keyword != null && !keyword.isBlank()) {
@@ -34,6 +34,9 @@ public class CustomerService {
                         cb.like(root.get("contact"), kw),
                         cb.like(root.get("phone"), kw)
                 ));
+            }
+            if (status != null && !status.isBlank()) {
+                ps.add(cb.equal(root.get("status"), Customer.CustomerStatus.valueOf(status.trim().toUpperCase())));
             }
             return cb.and(ps.toArray(new Predicate[0]));
         };

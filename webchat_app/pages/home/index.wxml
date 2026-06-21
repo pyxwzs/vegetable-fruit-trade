@@ -1,0 +1,184 @@
+<wxs src="../../utils/format.wxs" module="f" />
+<wxs module="u">
+  module.exports = {
+    danger: function (v) {
+      return parseFloat(v) > 0;
+    },
+    dangerGap: function (v) {
+      return parseFloat(v) < 0;
+    }
+  };
+</wxs>
+<view class="dashboard">
+  <!-- 应赚 / 实赚 -->
+  <view class="hero-card">
+    <view class="hero-head">
+      <text class="hero-month">{{ monthLabel }}</text>
+      <text class="hero-head-tag">经营概况</text>
+    </view>
+    <view class="hero-row">
+      <view class="hero-block">
+        <view class="hero-label">应赚</view>
+        <view class="hero-sub">销售 − 采购 − 支出</view>
+        <view class="hero-value {{ bookProfit < 0 ? 'negative' : '' }}">
+          {{ f.signedMoney(bookProfit) }}
+        </view>
+        <view class="breakdown">
+          <view class="breakdown-item">
+            <text>销售</text>
+            <text>{{ f.money(overview.salesTotal) }}</text>
+          </view>
+          <view class="breakdown-item">
+            <text>采购</text>
+            <text>{{ f.money(overview.purchaseTotal) }}</text>
+          </view>
+          <view class="breakdown-item">
+            <text>支出</text>
+            <text>{{ f.money(overview.otherExpenses) }}</text>
+          </view>
+        </view>
+      </view>
+      <view class="hero-block">
+        <view class="hero-label">实赚</view>
+        <view class="hero-sub">已收 − 已付 − 支出</view>
+        <view class="hero-value {{ cashProfit < 0 ? 'negative' : '' }}">
+          {{ f.signedMoney(cashProfit) }}
+        </view>
+        <view class="breakdown">
+          <view class="breakdown-item">
+            <text>已收</text>
+            <text>{{ f.money(overview.collectedFromCustomers) }}</text>
+          </view>
+          <view class="breakdown-item">
+            <text>已付</text>
+            <text>{{ f.money(overview.paidToFarmers) }}</text>
+          </view>
+          <view class="breakdown-item">
+            <text>支出</text>
+            <text>{{ f.money(overview.otherExpenses) }}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 关键指标 -->
+  <view class="metric-card">
+    <view class="metric-cell" bindtap="goSalesUnpaid">
+      <view class="metric-label">未收客户</view>
+      <view class="metric-value {{ u.danger(overview.uncollectedFromCustomers) ? 'danger' : '' }}">
+        {{ f.money(overview.uncollectedFromCustomers) }}
+      </view>
+    </view>
+    <view class="metric-cell" bindtap="goPurchaseUnpaid">
+      <view class="metric-label">未付供应商</view>
+      <view class="metric-value {{ u.danger(overview.unpaidToFarmers) ? 'danger' : '' }}">
+        {{ f.money(overview.unpaidToFarmers) }}
+      </view>
+    </view>
+    <view class="metric-cell" bindtap="goInventory">
+      <view class="metric-label">库存价值</view>
+      <view class="metric-value purple">{{ f.money(inventoryValue) }}</view>
+    </view>
+    <view class="metric-cell">
+      <view class="metric-label">应实差</view>
+      <view class="metric-value {{ u.dangerGap(profitGap) ? 'danger' : 'profit' }}">
+        {{ f.signedMoney(profitGap) }}
+      </view>
+    </view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="shortcut-grid">
+    <view
+      wx:for="{{ shortcuts }}"
+      wx:key="key"
+      class="shortcut-item"
+      hover-class="shortcut-item--hover"
+      data-url="{{ item.url }}"
+      bindtap="goUrl"
+    >
+      <view class="shortcut-icon" style="background: {{ item.bg }};">
+        <t-icon name="{{ item.icon }}" size="40rpx" color="{{ item.color }}" />
+      </view>
+      <text class="shortcut-text">{{ item.title }}</text>
+    </view>
+  </view>
+
+  <!-- 待办事项 -->
+  <view class="todo-card">
+    <view class="todo-head">
+      <text class="todo-title">待办事项</text>
+    </view>
+
+    <view class="todo-section">
+      <view class="todo-section-head">
+        <view class="todo-section-left">
+          <text class="todo-section-title">待入库</text>
+          <text wx:if="{{ purchasePending.count }}" class="todo-badge">
+            {{ purchasePending.count }}笔 · {{ f.money(purchasePending.totalAmount) }}
+          </text>
+        </view>
+        <text class="todo-link" bindtap="goPurchasePending">全部 ›</text>
+      </view>
+      <block wx:if="{{ pendingPurchases.length }}">
+        <view wx:for="{{ pendingPurchases }}" wx:key="id" class="todo-row">
+          <text class="todo-name">{{ item.name }}</text>
+          <text class="todo-date">{{ item.date }}</text>
+          <text class="todo-amount">¥{{ item.amountText }}</text>
+        </view>
+      </block>
+      <view wx:else class="todo-empty">暂无待入库</view>
+    </view>
+
+    <view class="todo-section">
+      <view class="todo-section-head">
+        <view class="todo-section-left">
+          <text class="todo-section-title">待出库</text>
+          <text wx:if="{{ salesPending.count }}" class="todo-badge">
+            {{ salesPending.count }}笔 · {{ f.money(salesPending.totalAmount) }}
+          </text>
+        </view>
+        <text class="todo-link" bindtap="goSalesPending">全部 ›</text>
+      </view>
+      <block wx:if="{{ pendingSales.length }}">
+        <view wx:for="{{ pendingSales }}" wx:key="id" class="todo-row">
+          <text class="todo-name">{{ item.name }}</text>
+          <text class="todo-date">{{ item.date }}</text>
+          <text class="todo-amount">¥{{ item.amountText }}</text>
+        </view>
+      </block>
+      <view wx:else class="todo-empty">暂无待出库</view>
+    </view>
+
+    <view class="todo-section">
+      <view class="todo-section-head">
+        <text class="todo-section-title">待付供应商</text>
+        <text class="todo-link" bindtap="goPurchaseUnpaid">去付款 ›</text>
+      </view>
+      <block wx:if="{{ supplierRanking.length }}">
+        <view wx:for="{{ supplierRanking }}" wx:key="name" class="todo-row">
+          <text class="todo-name">{{ item.name }}</text>
+          <text class="todo-amount danger">¥{{ item.amountText }}</text>
+        </view>
+      </block>
+      <view wx:else class="todo-empty">本月无欠款</view>
+    </view>
+
+    <view class="todo-section todo-section--last">
+      <view class="todo-section-head">
+        <text class="todo-section-title">待收客户</text>
+        <text class="todo-link" bindtap="goSalesUnpaid">去收款 ›</text>
+      </view>
+      <block wx:if="{{ customerRanking.length }}">
+        <view wx:for="{{ customerRanking }}" wx:key="name" class="todo-row">
+          <text class="todo-name">{{ item.name }}</text>
+          <text class="todo-amount danger">¥{{ item.amountText }}</text>
+        </view>
+      </block>
+      <view wx:else class="todo-empty">本月无欠款</view>
+    </view>
+  </view>
+
+  <t-loading wx:if="{{ loading }}" theme="circular" size="40rpx" class="loading" />
+</view>

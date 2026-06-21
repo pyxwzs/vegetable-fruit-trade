@@ -23,3 +23,7 @@ export function updateProduct(id, data) {
 export function deleteProduct(id) {
   return request({ url: `/products/${id}`, method: 'delete' })
 }
+
+export function getProductCategories() {
+  return request({ url: '/products/categories', method: 'get' })
+}

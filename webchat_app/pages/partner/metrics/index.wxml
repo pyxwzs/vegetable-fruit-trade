@@ -1,0 +1,166 @@
+<view class="metrics-page">
+  <view class="filter-panel">
+    <view class="filter-head">
+      <view class="filter-label">指标类型</view>
+      <view class="add-btn" bindtap="openCreate">+ 新增</view>
+    </view>
+    <view class="period-tabs">
+      <view
+        wx:for="{{ periodTypes }}"
+        wx:key="key"
+        class="period-tab {{ periodType === item.key ? 'active' : '' }}"
+        data-type="{{ item.key }}"
+        bindtap="onPeriodTypeChange"
+      >{{ item.label }}</view>
+    </view>
+    <view class="filter-row">
+      <picker wx:if="{{ periodType === 'MONTH' }}" class="filter-picker date" mode="date" fields="month" value="{{ selectedMonth }}" bindchange="onMonthChange">
+        <view class="tool-picker inline">{{ selectedMonth }} ▾</view>
+      </picker>
+      <picker wx:else class="filter-picker date" mode="date" fields="year" value="{{ selectedYear }}" bindchange="onYearChange">
+        <view class="tool-picker inline">{{ selectedYear }}年 ▾</view>
+      </picker>
+      <picker class="filter-picker supplier" mode="selector" range="{{ supplierOptions }}" range-key="name" value="{{ supplierIndex }}" bindchange="onSupplierChange">
+        <view class="tool-picker inline">{{ supplierOptions[supplierIndex].name }} ▾</view>
+      </picker>
+    </view>
+    <view class="filter-row secondary">
+      <picker class="filter-picker product" mode="selector" range="{{ productOptions }}" range-key="name" value="{{ productIndex }}" bindchange="onProductChange">
+        <view class="tool-picker inline">{{ productOptions[productIndex].name }} ▾</view>
+      </picker>
+      <view class="search-box">
+        <text class="search-icon">🔍</text>
+        <input class="search-input" value="{{ keyword }}" placeholder="搜索供应商/商品" confirm-type="search" bindinput="onSearchInput" bindconfirm="onSearchSubmit" />
+        <text wx:if="{{ keyword }}" class="search-clear" bindtap="onSearchClear">×</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="summary-panel">
+    <view class="summary-tip">各商品单位不同，仅统计种数与达标情况，数量请查看下方明细。</view>
+    <view class="summary-grid">
+      <view class="summary-card">
+        <text class="summary-label">供应商</text>
+        <text class="summary-value">{{ completionSummary.supplierCount }}</text>
+      </view>
+      <view class="summary-card {{ completionStatusFilter === 'ALL' ? 'active' : '' }}" data-filter="ALL" bindtap="onCompletionStatusFilter">
+        <text class="summary-label">指标数</text>
+        <text class="summary-value">{{ completionSummary.metricCount }}</text>
+      </view>
+      <view class="summary-card primary {{ completionStatusFilter === 'COMPLETED' ? 'active' : '' }}" data-filter="COMPLETED" bindtap="onCompletionStatusFilter">
+        <text class="summary-label">已达标</text>
+        <text class="summary-value">{{ completionSummary.completedCount }}</text>
+      </view>
+      <view class="summary-card {{ completionStatusFilter === 'PENDING' ? 'active' : '' }}" data-filter="PENDING" bindtap="onCompletionStatusFilter">
+        <text class="summary-label">未达标</text>
+        <text class="summary-value shortfall">{{ completionSummary.pendingCount }}</text>
+      </view>
+      <view class="summary-card wide">
+        <text class="summary-label">达标率 {{ completionSummary.reachRate }}%</text>
+        <view class="progress-track">
+          <view class="progress-bar {{ completionSummary.reachRate >= 100 ? 'done' : '' }}" style="width: {{ completionSummary.progressWidth }}%;" />
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{ loading }}" class="state-box">
+    <t-loading theme="circular" size="48rpx" />
+  </view>
+  <view wx:elif="{{ !hasCompletionData }}" class="state-box">
+    <t-empty description="该周期暂无订量指标，点击上方「新增」添加" />
+  </view>
+  <view wx:elif="{{ !groupTotal }}" class="state-box">
+    <t-empty description="{{ emptyFilterText }}" />
+  </view>
+  <view wx:else class="group-list">
+    <view wx:for="{{ displayGroups }}" wx:key="supplierId" class="group-card">
+      <view class="group-head" data-id="{{ item.supplierId }}" bindtap="toggleGroup">
+        <view class="group-main">
+          <text class="group-name">{{ item.supplierName }}</text>
+          <text class="group-meta">共 {{ item.productCount }} 种 · 已达标 {{ item.completedCount }} 种</text>
+        </view>
+        <text class="group-arrow">{{ item.expanded ? '▴' : '▾' }}</text>
+      </view>
+      <view wx:if="{{ item.expanded }}" class="group-body">
+        <view wx:for="{{ item.items }}" wx:for-item="row" wx:key="id" class="item-card">
+          <view class="item-title">{{ row.productTitle }}</view>
+          <view class="item-row"><text class="k">订量</text><text class="v">{{ row.targetQtyText }}</text></view>
+          <view class="item-row"><text class="k">实际</text><text class="v">{{ row.actualQtyText }}</text></view>
+          <view class="item-row"><text class="k">差额</text><text class="v {{ row.gapClass }}">{{ row.gapQtyText }}</text></view>
+          <view class="item-progress">
+            <text class="k">完成度 {{ row.completionPercent }}%</text>
+            <view class="progress-track small">
+              <view class="progress-bar {{ row.completionPercent >= 100 ? 'done' : '' }}" style="width: {{ row.progressWidth }}%;" />
+            </view>
+          </view>
+          <view class="card-actions" catchtap="stopBubble">
+            <t-button size="small" theme="primary" variant="outline" data-id="{{ row.id }}" catchtap="openEdit">编辑</t-button>
+            <t-button size="small" theme="danger" variant="outline" data-id="{{ row.id }}" data-title="{{ row.supplierName }} · {{ row.productName }}" catchtap="onDelete">删除</t-button>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{ groupTotal > 0 }}" class="pagination">
+      <text class="pg-total">共 {{ groupTotal }} 条</text>
+      <picker mode="selector" range="{{ pageSizeOptions }}" value="{{ completionPageSizeIndex }}" bindchange="onCompletionPageSizeChange">
+        <view class="pg-size">{{ completionPageSize }} 条/页 ▾</view>
+      </picker>
+      <view class="pg-nav">
+        <view class="pg-btn {{ completionPage <= 1 ? 'disabled' : '' }}" bindtap="onCompletionPrevPage">上一页</view>
+        <text class="pg-info">{{ completionPage }}/{{ completionTotalPages }}</text>
+        <view class="pg-btn {{ completionPage >= completionTotalPages ? 'disabled' : '' }}" bindtap="onCompletionNextPage">下一页</view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<t-popup visible="{{ showForm }}" placement="bottom" bind:visible-change="closeForm">
+  <view class="form-panel">
+    <view class="form-title">{{ formMode === 'edit' ? '编辑订量' : '新增订量' }}</view>
+    <view class="form-field">
+      <text class="form-label">指标类型</text>
+      <view class="period-tabs form-tabs">
+        <view class="period-tab {{ form.periodType === 'MONTH' ? 'active' : '' }}" data-type="MONTH" bindtap="onFormPeriodTypeChange">月指标</view>
+        <view class="period-tab {{ form.periodType === 'YEAR' ? 'active' : '' }}" data-type="YEAR" bindtap="onFormPeriodTypeChange">年指标</view>
+      </view>
+    </view>
+    <view class="form-field">
+      <text class="form-label">供应商</text>
+      <picker mode="selector" range="{{ formSuppliers }}" range-key="name" value="{{ form.supplierIndex }}" bindchange="onFormSupplierChange">
+        <view class="form-picker">{{ formSupplierLabel }} ▾</view>
+      </picker>
+    </view>
+    <view class="form-field">
+      <text class="form-label">商品</text>
+      <picker mode="selector" range="{{ formProducts }}" range-key="name" value="{{ form.productIndex }}" bindchange="onFormProductChange">
+        <view class="form-picker">{{ formProductLabel }} ▾</view>
+      </picker>
+    </view>
+    <view class="form-field" wx:if="{{ form.periodType === 'MONTH' }}">
+      <text class="form-label">所属月份</text>
+      <picker mode="date" fields="month" value="{{ form.selectedMonth }}" bindchange="onFormMonthChange">
+        <view class="form-picker">{{ form.selectedMonth || '请选择' }} ▾</view>
+      </picker>
+    </view>
+    <view class="form-field" wx:else>
+      <text class="form-label">所属年份</text>
+      <picker mode="date" fields="year" value="{{ form.selectedYear }}" bindchange="onFormYearChange">
+        <view class="form-picker">{{ form.selectedYear }}年 ▾</view>
+      </picker>
+    </view>
+    <view class="form-field">
+      <text class="form-label">订量指标</text>
+      <input class="form-input" type="digit" value="{{ form.targetQty }}" bindfocus="onFormTargetFocus" bindinput="onFormTargetInput" />
+    </view>
+    <view class="form-field">
+      <text class="form-label">状态</text>
+      <picker mode="selector" range="{{ statusOptions }}" range-key="label" value="{{ form.statusIndex }}" bindchange="onFormStatusChange">
+        <view class="form-picker">{{ formStatusLabel }} ▾</view>
+      </picker>
+    </view>
+    <t-button theme="primary" block loading="{{ submitting }}" bindtap="submitForm">
+      {{ formMode === 'edit' ? '保存' : '新增' }}
+    </t-button>
+  </view>
+</t-popup>

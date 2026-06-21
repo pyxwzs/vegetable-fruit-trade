@@ -1,0 +1,36 @@
+<t-navbar left-arrow title="邀请码注册" />
+<view class="page register">
+  <view class="tips">使用平台发放的邀请码开通新租户，需授权微信头像与昵称</view>
+
+  <view class="auth-card">
+    <button class="avatar-btn" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+      <image wx:if="{{ avatarUrl }}" class="avatar-img" src="{{ avatarUrl }}" mode="aspectFill" />
+      <view wx:else class="avatar-placeholder">
+        <t-icon name="user" size="64rpx" />
+        <text>授权头像</text>
+      </view>
+    </button>
+    <view class="nickname-field">
+      <text class="field-label">微信昵称</text>
+      <input
+        class="nickname-input"
+        type="nickname"
+        placeholder="点击授权微信昵称"
+        value="{{ form.wxNickname }}"
+        data-field="wxNickname"
+        bindinput="onFieldChange"
+      />
+    </view>
+  </view>
+
+  <view class="form-card">
+    <t-input label="邀请码" placeholder="12位邀请码" value="{{ form.inviteCode }}" data-field="inviteCode" bindchange="onFieldChange" />
+    <t-input label="名称" placeholder="商户/租户名称" value="{{ form.tenantName }}" data-field="tenantName" bindchange="onFieldChange" />
+    <t-input label="真实姓名" placeholder="必填" value="{{ form.realName }}" data-field="realName" bindchange="onFieldChange" />
+    <t-input label="手机号" type="number" maxlength="11" placeholder="必填" value="{{ form.phone }}" data-field="phone" bindchange="onFieldChange" />
+  </view>
+
+  <view class="actions">
+    <t-button theme="primary" block loading="{{ loading }}" bindtap="handleRegister">提交注册</t-button>
+  </view>
+</view>

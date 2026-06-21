@@ -1,6 +1,7 @@
 package com.trade.config;
 
 import com.trade.security.JwtAuthenticationFilter;
+import com.trade.security.PlatformAdminAccessFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PlatformAdminAccessFilter platformAdminAccessFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -34,11 +36,15 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/auth/login", "/auth/refresh").permitAll()
+                .antMatchers("/auth/platform/login", "/auth/refresh", "/auth/wx/login", "/auth/wx/register").permitAll()
+                .antMatchers("/tenants/public").permitAll()
+                .antMatchers("/site-settings").permitAll()
+                .antMatchers("/uploads/**").permitAll()
                 .antMatchers("/actuator/health", "/actuator/health/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(platformAdminAccessFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

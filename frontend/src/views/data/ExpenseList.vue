@@ -150,7 +150,7 @@ import { PieChart, BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
-import { getExpenses, getExpenseYearTotal, createExpense, updateExpense, deleteExpense } from '@/api/expense'
+import { getExpenses, getExpenseYearTotal, getExpenseCategories, createExpense, updateExpense, deleteExpense } from '@/api/expense'
 import { useIsMobile } from '@/composables/useIsMobile'
 import MobileListCard from '@/components/MobileListCard.vue'
 
@@ -255,14 +255,23 @@ const barOption = computed(() => {
 const loading = ref(false)
 const list = ref([])
 const page = ref(1)
-const size = ref(10)
+const size = ref(5)
 const total = ref(0)
 const keyword = ref('')
 const startDate = ref('')
 const endDate = ref('')
 const periodLabel = ref('')
 
-const categoryOptions = ['油费', '工费', '运费', '修车费', '餐饮费', '水电费', '包装费', '其他']
+const categoryOptions = ref([])
+
+const loadCategories = async () => {
+  try {
+    const res = await getExpenseCategories()
+    categoryOptions.value = res.data || []
+  } catch {
+    categoryOptions.value = []
+  }
+}
 
 const formVisible = ref(false)
 const formTitle = ref('新增支出')
@@ -340,6 +349,7 @@ const submitForm = async () => {
       if (form.id) { await updateExpense(form.id, payload); ElMessage.success('已保存') }
       else { await createExpense(payload); ElMessage.success('已添加') }
       formVisible.value = false
+      loadCategories()
       refreshAll()
     } catch { /* 拦截器 */ } finally { submitting.value = false }
   })
@@ -351,7 +361,7 @@ const handleDelete = (row) => {
     .catch(() => {})
 }
 
-onMounted(() => { loadDashboard(); loadData() })
+onMounted(() => { loadCategories(); loadDashboard(); loadData() })
 </script>
 
 <style scoped lang="scss">

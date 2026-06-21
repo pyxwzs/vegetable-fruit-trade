@@ -1,5 +1,7 @@
 package com.trade.security;
 
+import com.trade.tenant.TenantContext;
+import com.trade.tenant.TenantFilterManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final TenantFilterManager tenantFilterManager;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -32,12 +35,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         log.debug("处理请求: {}, 方法: {}", requestURI, request.getMethod());
 
-        // 放行登录（MFA）、注册、刷新令牌与密码重置
-        if (requestURI.contains("/auth/config") || requestURI.contains("/auth/login")
-                || requestURI.contains("/auth/login/mfa-challenge") || requestURI.contains("/auth/login/mfa-verify")
-                || requestURI.contains("/auth/register/challenge") || requestURI.contains("/auth/register/verify")
-                || requestURI.contains("/auth/refresh")
-                || requestURI.contains("/auth/forgot-password") || requestURI.contains("/auth/reset-password")) {
+        if (requestURI.contains("/auth/config")
+                || requestURI.contains("/auth/platform/login")
+                || requestURI.contains("/auth/wx/login")
+                || requestURI.contains("/auth/wx/register")
+                || requestURI.contains("/auth/refresh")) {
             log.debug("放行认证相关匿名请求: {}", requestURI);
             filterChain.doFilter(request, response);
             return;
@@ -49,7 +51,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt) && tokenProvider.isAccessToken(jwt)) {
                 String username = tokenProvider.getUsernameFromToken(jwt);
-                log.debug("JWT有效，用户名: {}", username);
+                Long tenantId = tokenProvider.getTenantIdFromToken(jwt);
+                log.debug("JWT有效，租户: {}, 用户名: {}", tenantId, username);
+
+                if (tenantId != null) {
+                    TenantContext.set(tenantId);
+                    tenantFilterManager.enableIfPresent();
+                }
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {

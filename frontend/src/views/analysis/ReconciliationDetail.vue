@@ -1,7 +1,7 @@
 <template>
   <div class="recon-detail">
-    <div v-if="groupedDays.length" class="detail-scroll">
-      <div v-for="day in groupedDays" :key="day.date" class="day-block">
+    <div v-if="groupedDays.length" class="detail-body">
+      <div v-for="day in pagedDays" :key="day.date" class="day-block">
         <div class="day-head">
           <span class="day-date">{{ day.date }}</span>
           <span class="day-total">当日 ¥{{ day.total.toFixed(2) }}</span>
@@ -21,8 +21,18 @@
           </div>
         </div>
       </div>
+      <el-pagination
+        v-if="showPagination"
+        v-model:current-page="page"
+        v-model:page-size="pageSize"
+        :total="groupedDays.length"
+        :page-sizes="[5, 10, 20]"
+        layout="total, sizes, prev, pager, next"
+        class="pagination"
+        @size-change="onPageSizeChange"
+      />
       <div class="month-total">
-        <span>本月合计</span>
+        <span>{{ filterDate ? '当日合计' : '本月合计' }}</span>
         <b>¥{{ monthTotal.toFixed(2) }}</b>
       </div>
     </div>
@@ -31,12 +41,22 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
   filterDate: { type: String, default: '' }
 })
+
+const page = ref(1)
+const pageSize = ref(5)
+
+watch(
+  () => [props.items, props.filterDate],
+  () => { page.value = 1 }
+)
+
+watch(pageSize, () => { page.value = 1 })
 
 const filtered = computed(() => {
   if (!props.filterDate) return props.items || []
@@ -55,12 +75,24 @@ const groupedDays = computed(() => {
   return [...map.values()].sort((a, b) => String(a.date).localeCompare(String(b.date)))
 })
 
+const showPagination = computed(() => !props.filterDate && groupedDays.value.length > pageSize.value)
+
+const pagedDays = computed(() => {
+  if (props.filterDate) return groupedDays.value
+  const start = (page.value - 1) * pageSize.value
+  return groupedDays.value.slice(start, start + pageSize.value)
+})
+
 const monthTotal = computed(() =>
   groupedDays.value.reduce((s, d) => s + d.total, 0)
 )
 
+const onPageSizeChange = () => {
+  page.value = 1
+}
+
 const qtyText = (row) => {
-  const q = Number(row.quantity).toFixed(3)
+  const q = Number(row.quantity).toFixed(1)
   return row.unit ? `${q} ${row.unit}` : q
 }
 
@@ -72,9 +104,7 @@ const priceText = (row) => {
 
 <style scoped lang="scss">
 .recon-detail {
-  .detail-scroll {
-    max-height: 480px;
-    overflow-y: auto;
+  .detail-body {
     @media (max-width: 767px) { max-height: none; }
   }
 }
@@ -98,15 +128,20 @@ const priceText = (row) => {
   .day-total { font-size: 12px; color: #409eff; font-weight: 600; }
 }
 
-.product-table { font-size: 13px; }
+.product-table {
+  font-size: 13px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 .product-header,
 .product-row {
   display: grid;
-  grid-template-columns: 1fr 72px 88px 72px;
-  gap: 4px;
+  grid-template-columns: minmax(64px, 1fr) 108px 96px 88px;
+  gap: 8px;
   padding: 6px 12px;
   align-items: center;
+  min-width: 380px;
 }
 
 .product-header {
@@ -121,9 +156,27 @@ const priceText = (row) => {
   &:last-child { border-bottom: none; }
 }
 
-.col-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.col-price, .col-qty, .col-amt { text-align: right; }
+.col-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.col-price,
+.col-qty,
+.col-amt {
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .col-amt { font-weight: 600; }
+
+.pagination {
+  margin: 4px 0 12px;
+  justify-content: flex-end;
+}
 
 .month-total {
   display: flex;

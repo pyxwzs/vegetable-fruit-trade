@@ -67,9 +67,8 @@ public class SalesService {
         if (order.getStatus() != SalesOrder.OrderStatus.PENDING) {
             throw new BusinessException("仅待处理的订单可完成");
         }
-        long wid = warehouseId != null ? warehouseId : 1L;
         for (SalesOrderItem item : order.getItems()) {
-            inventoryService.deductStock(item.getProduct().getId(), wid, item.getQuantity());
+            inventoryService.deductStock(item.getProduct().getId(), warehouseId, item.getQuantity());
         }
         order.setStatus(SalesOrder.OrderStatus.COMPLETED);
         return salesOrderRepository.save(order);

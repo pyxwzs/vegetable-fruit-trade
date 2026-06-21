@@ -26,8 +26,9 @@ public class CustomerController {
     @GetMapping
     public ApiResponse<Page<Customer>> page(
             @RequestParam(required = false) String keyword,
-            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResponse.success(customerService.getCustomers(keyword, pageable));
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ApiResponse.success(customerService.getCustomers(keyword, status, pageable));
     }
 
     @GetMapping("/active")

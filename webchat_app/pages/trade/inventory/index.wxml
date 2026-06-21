@@ -1,0 +1,116 @@
+<wxs src="../../../utils/format.wxs" module="f" />
+<wxs module="u">
+  module.exports = {
+    hasPending: function (v) {
+      return parseFloat(v) > 0;
+    }
+  };
+</wxs>
+<view class="inventory-page">
+  <view class="summary-card">
+    <view class="summary-title">库存概览</view>
+    <view class="summary-grid">
+      <view class="summary-cell">
+        <text class="cell-label">商品种类</text>
+        <text class="cell-value purple">{{ skuCount }}</text>
+        <text class="cell-sub">种</text>
+      </view>
+      <view class="summary-cell">
+        <text class="cell-label">库存总价值</text>
+        <text class="cell-value purple">¥{{ totalValueText }}</text>
+        <text class="cell-sub">按最近采购价</text>
+      </view>
+      <view class="summary-cell tap" bindtap="goPurchasePending">
+        <text class="cell-label">待入库</text>
+        <text class="cell-value blue {{ u.hasPending(purchasePending.totalAmount) ? 'danger' : '' }}">
+          ¥{{ purchasePendingText }}
+        </text>
+        <text class="cell-sub">{{ purchasePending.count }} 笔 ›</text>
+      </view>
+      <view class="summary-cell tap" bindtap="goSalesPending">
+        <text class="cell-label">待出库</text>
+        <text class="cell-value green {{ u.hasPending(salesPending.totalAmount) ? 'danger' : '' }}">
+          ¥{{ salesPendingText }}
+        </text>
+        <text class="cell-sub">{{ salesPending.count }} 笔 ›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="toolbar">
+    <view class="search-box">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        value="{{ keyword }}"
+        placeholder="搜索商品/分类"
+        confirm-type="search"
+        bindinput="onSearchInput"
+        bindconfirm="onSearchSubmit"
+      />
+      <text wx:if="{{ keyword }}" class="search-clear" bindtap="onSearchClear">×</text>
+    </view>
+    <picker
+      mode="selector"
+      range="{{ filters }}"
+      range-key="label"
+      value="{{ filterIndex }}"
+      bindchange="onFilterChange"
+    >
+      <view class="filter-select">
+        <text class="filter-text">{{ filters[filterIndex].label }}</text>
+        <text class="filter-arrow">▾</text>
+      </view>
+    </picker>
+  </view>
+
+  <view wx:if="{{ loading && !list.length }}" class="state-box">
+    <t-loading theme="circular" size="48rpx" />
+  </view>
+
+  <view wx:elif="{{ !list.length }}" class="state-box">
+    <t-empty icon="layers" description="暂无库存数据" />
+  </view>
+
+  <view wx:else class="card-list">
+    <view wx:for="{{ list }}" wx:key="id" class="inventory-card">
+      <view class="card-head">
+        <view class="head-main">
+          <view class="product-name">{{ item.name }}</view>
+          <view class="product-meta">{{ item.category }}</view>
+        </view>
+        <view class="head-right">
+          <view class="card-value">¥{{ f.fmtMoney(item.value) }}</view>
+        </view>
+      </view>
+
+      <view class="card-rows">
+        <view class="info-row">
+          <text class="k">当前库存</text>
+          <text class="v strong">{{ item.quantityText }} {{ item.unit }}</text>
+        </view>
+        <view class="info-row">
+          <text class="k">单位成本</text>
+          <text class="v">¥{{ f.fmtMoney(item.unitCost) }}/{{ item.unit || '—' }}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="pagination" wx:if="{{ total > 0 }}">
+      <text class="pg-total">共 {{ total }} 条</text>
+      <picker
+        mode="selector"
+        range="{{ pageSizeOptions }}"
+        value="{{ pageSizeIndex }}"
+        bindchange="onPageSizeChange"
+      >
+        <view class="pg-size">{{ pageSize }} 条/页 ▾</view>
+      </picker>
+      <view class="pg-nav">
+        <view class="pg-btn {{ page <= 1 ? 'disabled' : '' }}" bindtap="onPrevPage">上一页</view>
+        <text class="pg-info">{{ page }}/{{ totalPages }}</text>
+        <view class="pg-btn {{ page >= totalPages ? 'disabled' : '' }}" bindtap="onNextPage">下一页</view>
+      </view>
+    </view>
+  </view>
+</view>

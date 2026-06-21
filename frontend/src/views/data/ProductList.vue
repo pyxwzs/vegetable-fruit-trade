@@ -51,7 +51,7 @@
       </div>
 
       <el-pagination v-model:current-page="page" v-model:page-size="size"
-          :total="total" :page-sizes="[10, 20, 50]"
+          :total="total" :page-sizes="[5, 10, 20]"
           layout="total, prev, pager, next"
           @size-change="loadData" @current-change="loadData"
           class="pagination" />
@@ -65,7 +65,9 @@
           <el-input v-model="form.name" placeholder="请输入商品名称" />
         </el-form-item>
         <el-form-item label="分类">
-          <el-input v-model="form.category" placeholder="如：蔬菜、水果、根茎类" />
+          <el-select v-model="form.category" allow-create filterable clearable placeholder="选择或输入分类" style="width: 100%">
+            <el-option v-for="c in categoryOptions" :key="c" :label="c" :value="c" />
+          </el-select>
         </el-form-item>
         <el-form-item label="单位" prop="unit">
           <el-input v-model="form.unit" placeholder="如：斤、箱、个" />
@@ -93,14 +95,16 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useIsMobile } from '@/composables/useIsMobile'
 import MobileListCard from '@/components/MobileListCard.vue'
-import { getProducts, createProduct, updateProduct, deleteProduct } from '@/api/product'
+import { getProducts, getProductCategories, createProduct, updateProduct, deleteProduct } from '@/api/product'
 
 const isMobile = useIsMobile()
+
+const categoryOptions = ref([])
 
 const loading = ref(false)
 const products = ref([])
 const page = ref(1)
-const size = ref(10)
+const size = ref(5)
 const total = ref(0)
 const searchKeyword = ref('')
 
@@ -113,6 +117,15 @@ const form = reactive({ id: null, name: '', category: '', unit: '', specificatio
 const rules = {
   name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
   unit: [{ required: true, message: '请输入单位', trigger: 'blur' }]
+}
+
+const loadCategories = async () => {
+  try {
+    const res = await getProductCategories()
+    categoryOptions.value = res.data || []
+  } catch {
+    categoryOptions.value = []
+  }
 }
 
 const loadData = async () => {
@@ -161,11 +174,12 @@ const submitForm = async () => {
       else { await createProduct(payload); ElMessage.success('创建成功') }
       dialogVisible.value = false
       loadData()
+      loadCategories()
     } catch { /* 拦截器 */ } finally { submitting.value = false }
   })
 }
 
-onMounted(() => loadData())
+onMounted(() => { loadCategories(); loadData() })
 </script>
 
 <style scoped lang="scss">

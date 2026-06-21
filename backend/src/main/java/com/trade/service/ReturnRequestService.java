@@ -87,14 +87,13 @@ public class ReturnRequestService {
         if (req.getStatus() != ReturnFinanceRequest.Status.PENDING) {
             throw new BusinessException("仅待审批的申请可审批");
         }
-        long wid = warehouseId != null ? warehouseId : 1L;
         List<ReturnRequestLineDTO> lines = parseLines(req.getLinesJson());
 
         if (req.getKind() == ReturnFinanceRequest.Kind.PURCHASE) {
             for (ReturnRequestLineDTO line : lines) {
                 InventoryMovementDTO mv = new InventoryMovementDTO();
                 mv.setProductId(line.getProductId());
-                mv.setWarehouseId(wid);
+                mv.setWarehouseId(warehouseId);
                 mv.setQuantity(line.getQuantity());
                 inventoryService.removeStock(mv);
             }
@@ -109,7 +108,7 @@ public class ReturnRequestService {
             for (ReturnRequestLineDTO line : lines) {
                 InventoryMovementDTO mv = new InventoryMovementDTO();
                 mv.setProductId(line.getProductId());
-                mv.setWarehouseId(wid);
+                mv.setWarehouseId(warehouseId);
                 mv.setQuantity(line.getQuantity());
                 inventoryService.addStock(mv);
             }

@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "修改密码",
+  "usingComponents": {
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-button": "tdesign-miniprogram/button/button"
+  }
+}

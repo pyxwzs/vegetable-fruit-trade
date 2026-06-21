@@ -1,0 +1,6 @@
+@import './login.less';
+
+.login__footer {
+  margin-top: 32rpx;
+  text-align: center;
+}

@@ -10,6 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/expenses")
@@ -26,7 +27,7 @@ public class ExpenseController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "5") int size) {
         return ApiResponse.success(expenseService.list(keyword, year, month, startDate, endDate, page, size));
     }
 
@@ -35,6 +36,11 @@ public class ExpenseController {
             @RequestParam(defaultValue = "0") int year) {
         int y = year > 0 ? year : LocalDate.now().getYear();
         return ApiResponse.success(expenseService.sumByYear(y));
+    }
+
+    @GetMapping("/categories")
+    public ApiResponse<List<String>> categories() {
+        return ApiResponse.success(expenseService.getDistinctCategories());
     }
 
     @PostMapping

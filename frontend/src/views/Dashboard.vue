@@ -69,7 +69,7 @@
           <span class="stat-value text-danger">¥{{ fmt(overview.uncollectedFromCustomers) }}</span>
         </div>
         <div class="stat-cell">
-          <span class="stat-label">未付农户</span>
+          <span class="stat-label">未付供应商</span>
           <span class="stat-value text-danger">¥{{ fmt(overview.unpaidToFarmers) }}</span>
         </div>
         <div class="stat-cell clickable" @click="router.push('/inventory')">
@@ -134,11 +134,11 @@
 
         <section class="todo-block">
           <div class="todo-head">
-            <span class="todo-title">待付款农户</span>
+            <span class="todo-title">待付款供应商</span>
             <el-button type="primary" link @click="router.push('/purchase')">去付款 ›</el-button>
           </div>
-          <div v-if="farmerRanking.length" class="todo-list">
-            <div v-for="(row, i) in farmerRanking" :key="i" class="todo-row">
+          <div v-if="supplierRanking.length" class="todo-list">
+            <div v-for="(row, i) in supplierRanking" :key="i" class="todo-row">
               <span class="todo-name">{{ row.name }}</span>
               <span class="todo-amount text-danger">¥{{ fmt(row.unpaid) }}</span>
             </div>
@@ -165,12 +165,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getPurchaseOrders, getPurchasePendingStats } from '@/api/purchase'
 import { getSalesOrders, getSalesPendingStats } from '@/api/sales'
 import { getMonthlyOverview } from '@/api/analytics'
 import { getInventoryOverview } from '@/api/inventory'
+import { usePageRefresh } from '@/composables/usePageRefresh'
 
 const router = useRouter()
 
@@ -217,7 +218,7 @@ const cashProfit = computed(() =>
 
 const profitGap = computed(() => bookProfit.value - cashProfit.value)
 
-const farmerRanking = computed(() =>
+const supplierRanking = computed(() =>
   (overview.value.farmerUnpaidRanking || [])
     .filter(r => Number(r.unpaid) > 0)
     .slice(0, 5)
@@ -261,10 +262,12 @@ const loadExtra = async () => {
   } catch { /* silent */ }
 }
 
-onMounted(() => {
+const refreshAll = () => {
   loadOverview()
   loadExtra()
-})
+}
+
+usePageRefresh(refreshAll)
 </script>
 
 <style scoped lang="scss">

@@ -21,6 +21,7 @@ backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
 !backend/.mvn/wrapper/maven-wrapper.properties
 backend/*.log
+/*.jar
 
 # ──────────────────────────────────────────────
 # Node / Vue 前端
@@ -43,6 +44,7 @@ logs/
 # MySQL Docker 数据目录（运行时生成，不提交）
 # ──────────────────────────────────────────────
 database/data/
+/uploads/
 
 # ──────────────────────────────────────────────
 # 环境配置（含密码，不提交）
@@ -54,8 +56,10 @@ database/data/
 # ──────────────────────────────────────────────
 # 文档（不提交）
 # ──────────────────────────────────────────────
-docs/*
+docs
 *.xlsx
+
+uploads/
 
 
 

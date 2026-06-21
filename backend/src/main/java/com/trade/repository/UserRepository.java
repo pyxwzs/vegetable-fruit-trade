@@ -10,9 +10,17 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
-    Optional<User> findByUsername(String username);
+    Optional<User> findByLoginKey(String loginKey);
 
-    boolean existsByUsername(String username);
+    Optional<User> findByPhone(String phone);
 
-    boolean existsByUsernameAndIdNot(String username, Long id);
+    Optional<User> findByWxOpenId(String wxOpenId);
+
+    boolean existsByLoginKey(String loginKey);
+
+    boolean existsByPhone(String phone);
+
+    boolean existsByWxOpenId(String wxOpenId);
+
+    boolean existsByPhoneAndIdNot(String phone, Long id);
 }

@@ -1,0 +1,169 @@
+<wxs src="../../../utils/format.wxs" module="f" />
+<view class="trade-page">
+  <view class="summary-card">
+    <view class="summary-title">销售概览</view>
+    <view class="summary-metrics">
+      <view class="metric-item">
+        <text class="metric-label">{{ periodPrefix }}销售</text>
+        <text class="metric-value accent">¥{{ periodAmountText }}</text>
+        <text class="metric-sub">{{ periodCount }} 笔</text>
+      </view>
+      <view class="metric-divider" />
+      <view class="metric-item" bindtap="onUnpaidBannerTap">
+        <text class="metric-label">总未收</text>
+        <text class="metric-value danger">¥{{ unpaidTotalText }}</text>
+        <text class="metric-sub">全部未结清</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="date-query green">
+    <view class="mode-tabs">
+      <view class="mode-tab {{ dateMode === 'day' ? 'active' : '' }}" data-mode="day" bindtap="onDateModeChange">按日</view>
+      <view class="mode-tab {{ dateMode === 'month' ? 'active' : '' }}" data-mode="month" bindtap="onDateModeChange">按月</view>
+      <view class="mode-tab {{ dateMode === 'year' ? 'active' : '' }}" data-mode="year" bindtap="onDateModeChange">按年</view>
+    </view>
+    <picker wx:if="{{ dateMode === 'day' }}" mode="date" value="{{ selectedDate }}" bindchange="onDatePickChange">
+      <view class="date-picker">{{ selectedDate }} ▾</view>
+    </picker>
+    <picker wx:elif="{{ dateMode === 'month' }}" mode="date" fields="month" value="{{ selectedMonth }}" bindchange="onDatePickChange">
+      <view class="date-picker">{{ selectedMonth }} ▾</view>
+    </picker>
+    <picker wx:else mode="date" fields="year" value="{{ selectedYear }}" bindchange="onDatePickChange">
+      <view class="date-picker">{{ selectedYear }}年 ▾</view>
+    </picker>
+    <view class="date-range-label">查询范围：{{ dateLabel }}</view>
+  </view>
+
+  <view
+    wx:if="{{ pendingStats.count > 0 && filterKey !== 'PENDING' }}"
+    class="pending-banner"
+    bindtap="onPendingBannerTap"
+  >
+    <view class="pending-left">
+      <text class="pending-icon">⏳</text>
+      <text>未出库 {{ pendingStats.count }} 笔 · 合计 ¥{{ pendingAmountText }}</text>
+    </view>
+    <text class="pending-link">查看 ›</text>
+  </view>
+
+  <view class="toolbar">
+    <view class="search-box">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        value="{{ keyword }}"
+        placeholder="搜索单号/客户"
+        confirm-type="search"
+        bindinput="onSearchInput"
+        bindconfirm="onSearchSubmit"
+      />
+      <text wx:if="{{ keyword }}" class="search-clear" bindtap="onSearchClear">×</text>
+    </view>
+    <picker
+      mode="selector"
+      range="{{ filters }}"
+      range-key="label"
+      value="{{ filterIndex }}"
+      bindchange="onFilterChange"
+    >
+      <view class="filter-select">
+        <text>{{ filters[filterIndex].label }}</text>
+        <text class="filter-arrow">▾</text>
+      </view>
+    </picker>
+  </view>
+
+  <view wx:if="{{ loading && !list.length }}" class="state-box">
+    <t-loading theme="circular" size="48rpx" />
+  </view>
+
+  <view wx:elif="{{ !list.length }}" class="state-box">
+    <t-empty icon="shop" description="暂无销售单" />
+  </view>
+
+  <view wx:else class="card-list">
+    <view
+      wx:for="{{ list }}"
+      wx:key="id"
+      class="order-card"
+      data-id="{{ item.id }}"
+      bindtap="onCardTap"
+    >
+      <view class="card-head">
+        <view class="head-main">
+          <view class="partner-name">{{ item.customerName }}</view>
+          <view class="order-date">{{ item.orderDate }}</view>
+        </view>
+        <view class="head-right">
+          <view class="card-amount">¥{{ item.totalAmountText }}</view>
+          <view class="tag-row">
+            <t-tag theme="{{ item.statusTheme }}" variant="light" size="small">{{ item.statusText }}</t-tag>
+            <t-tag theme="{{ item.paymentTheme }}" variant="light" size="small">{{ item.paymentText }}</t-tag>
+          </view>
+        </view>
+      </view>
+
+      <view class="card-rows">
+        <view class="info-row">
+          <text class="k">单号</text>
+          <text class="v mono">{{ item.orderNo }}</text>
+        </view>
+        <view class="info-row">
+          <text class="k">已收</text>
+          <text class="v">¥{{ item.receivedAmountText }}</text>
+        </view>
+        <view class="info-row">
+          <text class="k">未收</text>
+          <text class="v {{ item.unpaid > 0 ? 'danger' : '' }}">¥{{ item.unpaidText }}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{ item.canComplete || item.canCollect || item.canCancel }}" class="card-actions" catchtap="stopBubble">
+        <t-button
+          wx:if="{{ item.canComplete }}"
+          size="small"
+          theme="primary"
+          variant="outline"
+          data-id="{{ item.id }}"
+          catchtap="onComplete"
+        >出库</t-button>
+        <t-button
+          wx:if="{{ item.canCollect }}"
+          size="small"
+          theme="warning"
+          variant="outline"
+          data-id="{{ item.id }}"
+          data-unpaid="{{ item.unpaid }}"
+          catchtap="onCollect"
+        >收款</t-button>
+        <t-button
+          wx:if="{{ item.canCancel }}"
+          size="small"
+          theme="danger"
+          variant="outline"
+          data-id="{{ item.id }}"
+          catchtap="onCancel"
+        >取消</t-button>
+        <t-button size="small" theme="default" variant="text" data-id="{{ item.id }}" catchtap="onCardTap">详情 ›</t-button>
+      </view>
+    </view>
+
+    <view class="pagination" wx:if="{{ total > 0 }}">
+      <text class="pg-total">共 {{ total }} 条</text>
+      <picker
+        mode="selector"
+        range="{{ pageSizeOptions }}"
+        value="{{ pageSizeIndex }}"
+        bindchange="onPageSizeChange"
+      >
+        <view class="pg-size">{{ pageSize }} 条/页 ▾</view>
+      </picker>
+      <view class="pg-nav">
+        <view class="pg-btn {{ page <= 1 ? 'disabled' : '' }}" bindtap="onPrevPage">上一页</view>
+        <text class="pg-info">{{ page }}/{{ totalPages }}</text>
+        <view class="pg-btn {{ page >= totalPages ? 'disabled' : '' }}" bindtap="onNextPage">下一页</view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,10 @@ public class ExpenseService {
 
     public java.math.BigDecimal sumByYear(int year) {
         return expenseRepository.sumByYear(year);
+    }
+
+    public List<String> getDistinctCategories() {
+        return expenseRepository.findDistinctCategories();
     }
 
     @Transactional

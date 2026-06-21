@@ -6,8 +6,10 @@ import javax.validation.constraints.NotBlank;
 
 @Data
 public class LoginRequest {
-    @NotBlank(message = "用户名不能为空")
-    private String username;
+
+    /** 用户名或手机号 */
+    @NotBlank(message = "请输入用户名或手机号")
+    private String account;
 
     @NotBlank(message = "密码不能为空")
     private String password;

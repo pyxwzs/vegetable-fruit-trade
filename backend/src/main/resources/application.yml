@@ -10,6 +10,9 @@ spring:
   devtools:
     restart:
       enabled: true
+      # 等待编译完成后再重启；poll-interval 必须大于 quiet-period
+      poll-interval: 4s
+      quiet-period: 2s
       exclude: static/**,public/**,templates/**,META-INF/maven/**
 
   datasource:
@@ -20,7 +23,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
     properties:
       hibernate:
@@ -45,6 +48,15 @@ jwt:
   expiration: 86400000
   refresh-expiration: 604800000
   refresh-expiration-remember: 2592000000
+
+app:
+  upload-dir: uploads
+
+wechat:
+  mini-program:
+    app-id: wx547f5abb5ec6b5a7
+    app-secret: a1d03db1750abe10d87d14ceee93dd01
+    mock-enabled: false
 
 logging:
   level:

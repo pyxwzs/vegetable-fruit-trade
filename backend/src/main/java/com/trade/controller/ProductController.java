@@ -24,13 +24,19 @@ public class ProductController {
     @GetMapping
     public ApiResponse<Page<Product>> getProducts(
             @RequestParam(required = false) String keyword,
-            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ApiResponse.success(productService.getProducts(keyword, pageable));
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ApiResponse.success(productService.getProducts(keyword, status, pageable));
     }
 
     @GetMapping("/all-enabled")
     public ApiResponse<List<Product>> getAllEnabledProducts() {
         return ApiResponse.success(productService.getAllEnabledProducts());
+    }
+
+    @GetMapping("/categories")
+    public ApiResponse<List<String>> getCategories() {
+        return ApiResponse.success(productService.getDistinctCategories());
     }
 
     @GetMapping("/{id}")

@@ -1,0 +1,8 @@
+<view class="password-page">
+  <t-input label="原密码" type="password" value="{{ oldPassword }}" data-field="oldPassword" bindchange="onFieldChange" />
+  <t-input label="新密码" type="password" placeholder="至少6位" value="{{ newPassword }}" data-field="newPassword" bindchange="onFieldChange" />
+  <t-input label="确认密码" type="password" value="{{ confirmPassword }}" data-field="confirmPassword" bindchange="onFieldChange" />
+  <view class="actions">
+    <t-button theme="primary" block loading="{{ loading }}" bindtap="onSubmit">确认修改</t-button>
+  </view>
+</view>

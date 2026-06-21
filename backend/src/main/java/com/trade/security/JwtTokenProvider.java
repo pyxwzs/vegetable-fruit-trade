@@ -16,6 +16,7 @@ public class JwtTokenProvider {
 
     public static final String CLAIM_TYPE = "typ";
     public static final String CLAIM_REMEMBER = "rm";
+    public static final String CLAIM_TENANT = "tid";
     public static final String TYPE_ACCESS = "access";
     public static final String TYPE_REFRESH = "refresh";
 
@@ -33,19 +34,22 @@ public class JwtTokenProvider {
 
     public String generateAccessToken(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        return buildToken(userPrincipal.getUsername(), jwtExpiration, TYPE_ACCESS, null);
+        return buildToken(userPrincipal.getUsername(), userPrincipal.getTenantId(), jwtExpiration, TYPE_ACCESS, null);
     }
 
-    public String generateRefreshToken(String username, boolean rememberMe) {
-        long ttl = Boolean.TRUE.equals(rememberMe) ? refreshExpirationRemember : refreshExpiration;
-        return buildToken(username, ttl, TYPE_REFRESH, rememberMe);
+    public String generateRefreshToken(String username, Long tenantId, boolean rememberMe) {
+        long ttl = rememberMe ? refreshExpirationRemember : refreshExpiration;
+        return buildToken(username, tenantId, ttl, TYPE_REFRESH, rememberMe);
     }
 
-    private String buildToken(String subject, long ttlMillis, String type, Boolean rememberMe) {
+    private String buildToken(String subject, Long tenantId, long ttlMillis, String type, Boolean rememberMe) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + ttlMillis);
         Map<String, Object> claims = new HashMap<>();
         claims.put(CLAIM_TYPE, type);
+        if (tenantId != null) {
+            claims.put(CLAIM_TENANT, tenantId);
+        }
         if (rememberMe != null) {
             claims.put(CLAIM_REMEMBER, rememberMe);
         }
@@ -66,11 +70,12 @@ public class JwtTokenProvider {
             throw new JwtException("非刷新令牌");
         }
         String username = claims.getSubject();
+        Long tenantId = getTenantIdFromClaims(claims);
         Boolean remember = claims.get(CLAIM_REMEMBER, Boolean.class);
         boolean rememberMe = Boolean.TRUE.equals(remember);
         Map<String, String> out = new HashMap<>();
-        out.put("token", buildToken(username, jwtExpiration, TYPE_ACCESS, null));
-        out.put("refreshToken", generateRefreshToken(username, rememberMe));
+        out.put("token", buildToken(username, tenantId, jwtExpiration, TYPE_ACCESS, null));
+        out.put("refreshToken", generateRefreshToken(username, tenantId, rememberMe));
         out.put("type", "Bearer");
         out.put("tokenType", "Bearer");
         return out;
@@ -78,6 +83,15 @@ public class JwtTokenProvider {
 
     public String getUsernameFromToken(String token) {
         return parseClaims(token).getSubject();
+    }
+
+    public Long getTenantIdFromToken(String token) {
+        return getTenantIdFromClaims(parseClaims(token));
+    }
+
+    public Long getTenantIdFromClaims(Claims claims) {
+        Number tenantId = claims.get(CLAIM_TENANT, Number.class);
+        return tenantId != null ? tenantId.longValue() : null;
     }
 
     public Claims parseClaims(String token) {

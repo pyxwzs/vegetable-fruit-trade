@@ -1,6 +1,7 @@
 package com.trade.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,15 +13,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "purchase_orders")
-public class PurchaseOrder {
+@Table(name = "purchase_orders", uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "order_no"}))
+public class PurchaseOrder extends TenantAwareEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(name = "order_no", nullable = false, length = 50)
     private String orderNo;
 
     @ManyToOne

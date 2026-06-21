@@ -1,8 +1,8 @@
 import request from './request'
 
-export function postLogin(data) {
+export function postPlatformLogin(data) {
     return request({
-        url: '/auth/login',
+        url: '/auth/platform/login',
         method: 'post',
         data
     })
@@ -23,17 +23,17 @@ export function getCurrentUser() {
     })
 }
 
-export function changePassword(data) {
+export function updateMe(data) {
     return request({
-        url: '/auth/me/password',
+        url: '/users/me',
         method: 'put',
         data
     })
 }
 
-export function updateMe(data) {
+export function updateMenuKeys(data) {
     return request({
-        url: '/users/me',
+        url: '/auth/me/menus',
         method: 'put',
         data
     })

@@ -2,9 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 
-const baseURL =
-    process.env.VUE_APP_BASE_API ||
-    (process.env.NODE_ENV === 'development' ? '/api' : 'http://localhost:8080/api')
+const baseURL = process.env.VUE_APP_BASE_API || '/api'
 
 const service = axios.create({
     baseURL,
@@ -13,17 +11,19 @@ const service = axios.create({
 
 const PUBLIC_AUTH_URLS = [
     '/auth/config',
-    '/auth/login',
-    '/auth/login/mfa-challenge',
-    '/auth/login/mfa-verify',
-    '/auth/register/challenge',
-    '/auth/register/verify',
-    '/auth/refresh',
-    '/auth/forgot-password',
-    '/auth/reset-password'
+    '/auth/platform/login',
+    '/auth/wx/login',
+    '/auth/wx/register',
+    '/auth/refresh'
 ]
 
-function isPublicAuthUrl(url) {
+function isPublicAuthUrl(url, method = 'get') {
+    if (url.includes('/site-settings') && String(method).toLowerCase() === 'get') {
+        return true
+    }
+    if (url.includes('/tenants/public')) {
+        return true
+    }
     return PUBLIC_AUTH_URLS.some(p => url.includes(p))
 }
 
@@ -31,10 +31,10 @@ function isPublicAuthUrl(url) {
 service.interceptors.request.use(
     config => {
         const token = localStorage.getItem('token')
-        if (token && !isPublicAuthUrl(config.url)) {
+        if (token && !isPublicAuthUrl(config.url, config.method)) {
             config.headers['Authorization'] = 'Bearer ' + token
         }
-        if (isPublicAuthUrl(config.url)) {
+        if (isPublicAuthUrl(config.url, config.method)) {
             delete config.headers['Authorization']
         }
         return config
@@ -52,7 +52,7 @@ service.interceptors.response.use(
         const originalRequest = error.config
         const status = error.response?.status
 
-        if (status === 401 && originalRequest && !originalRequest._retry && !isPublicAuthUrl(originalRequest.url)) {
+        if (status === 401 && originalRequest && !originalRequest._retry && !isPublicAuthUrl(originalRequest.url, originalRequest.method)) {
             const refresh = localStorage.getItem('refreshToken')
             if (refresh) {
                 originalRequest._retry = true
@@ -75,7 +75,10 @@ service.interceptors.response.use(
                     localStorage.removeItem('refreshToken')
                     if (!window.location.pathname.includes('/login')) {
                         ElMessage.error('登录已过期，请重新登录')
-                        router.push('/login')
+                        const loginPath = window.location.pathname.startsWith('/platform')
+                            ? '/platform/login'
+                            : '/login'
+                        router.push(loginPath)
                     }
                     return Promise.reject(e)
                 }
@@ -88,7 +91,10 @@ service.interceptors.response.use(
                 localStorage.removeItem('refreshToken')
                 if (!window.location.pathname.includes('/login')) {
                     ElMessage.error('登录已过期，请重新登录')
-                    router.push('/login')
+                    const loginPath = window.location.pathname.startsWith('/platform')
+                        ? '/platform/login'
+                        : '/login'
+                    router.push(loginPath)
                 }
             } else {
                 ElMessage.error(error.response.data?.message || '请求失败')

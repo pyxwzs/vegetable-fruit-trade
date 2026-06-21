@@ -33,7 +33,7 @@ public class SalesController {
             @RequestParam(required = false) String paymentStatus,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 5, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         SalesOrder.OrderStatus st = null;
         if (status != null && !status.isBlank()) {
             st = SalesOrder.OrderStatus.valueOf(status.trim().toUpperCase());

@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: docker.1ms.run/library/mysql:8.0
+    image: mysql:8.0
     container_name: trade-mysql
     restart: unless-stopped
     environment:

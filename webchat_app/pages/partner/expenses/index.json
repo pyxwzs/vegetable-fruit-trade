@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "支出记录",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-popup": "tdesign-miniprogram/popup/popup"
+  }
+}

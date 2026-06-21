@@ -1,0 +1,140 @@
+<view class="my-page {{ isLoad ? '' : 'my-page--guest' }}">
+  <!-- 已登录 -->
+  <block wx:if="{{ isLoad }}">
+    <view class="page-header">
+      <view class="header-glow" />
+    </view>
+
+    <view class="page-body">
+      <view class="user-card">
+        <view class="avatar-wrap">
+          <image
+            wx:if="{{ personalInfo.avatarUrl }}"
+            class="avatar"
+            src="{{ personalInfo.avatarUrl }}"
+            mode="aspectFill"
+          />
+          <view wx:else class="avatar avatar--placeholder">
+            <t-icon name="user" size="56rpx" color="#0052d9" />
+          </view>
+          <view wx:if="{{ statusClass !== 'danger' }}" class="avatar-badge" />
+        </view>
+        <view class="user-info">
+          <view class="user-name">{{ personalInfo.name }}</view>
+          <view wx:if="{{ personalInfo.wxNickname }}" class="user-wx">{{ personalInfo.wxNickname }}</view>
+          <view class="user-tags">
+            <view wx:if="{{ tenantName }}" class="pill pill--tenant">
+              <t-icon name="shop" size="24rpx" color="#0052d9" />
+              <text>{{ tenantName }}</text>
+            </view>
+            <view class="pill pill--role">{{ roleLabel }}</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="info-strip">
+        <view class="strip-item">
+          <view class="strip-icon">
+            <t-icon name="mobile" size="36rpx" color="#0052d9" />
+          </view>
+          <view class="strip-text">
+            <text class="strip-label">手机号</text>
+            <text class="strip-value">{{ personalInfo.phone || '未填写' }}</text>
+          </view>
+        </view>
+        <view class="strip-divider" />
+        <view class="strip-item">
+          <view class="strip-icon strip-icon--green">
+            <t-icon name="secured" size="36rpx" color="#2ba471" />
+          </view>
+          <view class="strip-text">
+            <text class="strip-label">账号状态</text>
+            <text class="strip-value {{ statusClass }}">{{ statusLabel }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section">
+        <view class="section-head">账号设置</view>
+        <view class="menu-card">
+          <view
+            wx:for="{{ menuList }}"
+            wx:key="name"
+            class="menu-item"
+            hover-class="menu-item--hover"
+            data-url="{{ item.url }}"
+            bindtap="onMenuClick"
+          >
+            <view class="menu-icon" style="background: {{ item.iconBg }};">
+              <t-icon name="{{ item.icon }}" size="40rpx" color="{{ item.iconColor }}" />
+            </view>
+            <text class="menu-title">{{ item.name }}</text>
+            <t-icon name="chevron-right" size="36rpx" color="#c5c5c5" />
+          </view>
+        </view>
+      </view>
+
+      <view class="section">
+        <view class="section-head">关于</view>
+        <view class="menu-card">
+          <view class="menu-item menu-item--static">
+            <view class="menu-icon menu-icon--gray">
+              <t-icon name="info-circle" size="40rpx" color="#666" />
+            </view>
+            <text class="menu-title">应用版本</text>
+            <text class="menu-note">v{{ version }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="footer-tip">
+        <t-icon name="tips" size="28rpx" color="#bbb" />
+        <text>租户业务请使用本小程序；平台管理员请使用 Web 管理后台</text>
+      </view>
+
+      <button class="logout-btn" bindtap="onLogout">退出登录</button>
+    </view>
+  </block>
+
+  <!-- 未登录 -->
+  <block wx:else>
+    <view class="guest-header">
+      <view class="guest-glow" />
+    </view>
+
+    <view class="guest-body">
+      <view class="guest-hero">
+        <view class="guest-logo">
+          <text class="guest-emoji">🥬</text>
+        </view>
+        <view class="guest-title">欢迎使用</view>
+        <view class="guest-desc">登录后可查看经营数据，管理进销存与对账</view>
+      </view>
+
+      <view class="guest-panel">
+        <view class="guest-features">
+          <view wx:for="{{ guestFeatures }}" wx:key="text" class="guest-feature">
+            <view class="guest-feature-icon">
+              <t-icon name="{{ item.icon }}" size="40rpx" color="#0052d9" />
+            </view>
+            <text>{{ item.text }}</text>
+          </view>
+        </view>
+
+        <view class="guest-divider" />
+
+        <button class="wx-btn" bindtap="onLogin">
+          <image class="wx-icon" src="/static/icon_wx.png" mode="aspectFit" />
+          <text>微信一键登录</text>
+        </button>
+
+        <view class="register-row" bindtap="onRegister">
+          <text class="register-hint">还没有租户账号？</text>
+          <text class="register-link">邀请码注册</text>
+        </view>
+      </view>
+
+      <view class="guest-footer">安全登录 · 数据仅用于您的租户业务</view>
+    </view>
+  </block>
+</view>

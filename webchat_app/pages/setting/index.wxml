@@ -1,0 +1,7 @@
+<view class="setting-page">
+  <t-cell-group theme="card">
+    <t-cell title="应用版本" note="{{ version }}" />
+    <t-cell title="修改密码" arrow hover bindtap="goPassword" />
+  </t-cell-group>
+  <view class="hint">租户业务请使用本小程序；平台管理员请使用 Web 管理后台 /platform/login</view>
+</view>

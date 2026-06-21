@@ -1,0 +1,48 @@
+<view class="business-page">
+  <view class="page-header">
+    <view class="header-glow" />
+    <view class="header-title">业务中心</view>
+    <view class="header-sub">进销存 · 往来 · 对账统计</view>
+    <view wx:if="{{ menuCount }}" class="header-badge">{{ menuCount }} 项功能</view>
+  </view>
+
+  <view class="page-body">
+    <block wx:if="{{ menuGroups.length }}">
+      <view
+        wx:for="{{ menuGroups }}"
+        wx:key="group"
+        class="group-card"
+      >
+        <view class="group-head">
+          <view class="group-bar" style="background: {{ item.accent }};" />
+          <text class="group-title">{{ item.group }}</text>
+        </view>
+        <view class="menu-grid">
+          <view
+            wx:for="{{ item.items }}"
+            wx:for-item="menu"
+            wx:key="key"
+            class="menu-item"
+            hover-class="menu-item--hover"
+            data-url="{{ menu.url }}"
+            bindtap="onMenuTap"
+          >
+            <view class="menu-icon" style="background: {{ menu.iconBg }};">
+              <t-icon name="{{ menu.icon }}" size="44rpx" color="{{ menu.iconColor }}" />
+            </view>
+            <text class="menu-title">{{ menu.title }}</text>
+            <text class="menu-desc">{{ menu.desc }}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <view wx:else class="empty-card">
+      <view class="empty-icon">
+        <t-icon name="app" size="64rpx" color="#ccc" />
+      </view>
+      <text class="empty-title">暂无可用业务菜单</text>
+      <text class="empty-desc">请联系管理员开通权限</text>
+    </view>
+  </view>
+</view>

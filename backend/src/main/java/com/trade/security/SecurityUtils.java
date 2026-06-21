@@ -31,6 +31,11 @@ public final class SecurityUtils {
         return false;
     }
 
+    /** 是否具备平台管理员角色 */
+    public static boolean isPlatformAdmin() {
+        return hasAuthority("ROLE_PLATFORM_ADMIN");
+    }
+
     /** 是否具备系统管理员角色（ROLE_ADMIN） */
     public static boolean isAdmin() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

@@ -4,56 +4,10 @@
     <!-- 桌面侧边栏 -->
     <el-aside v-if="!isMobile" :width="isCollapse ? '64px' : '200px'" class="aside">
       <div class="logo">
-        <img src="@/assets/logo.png" alt="logo" />
-        <span v-if="!isCollapse">果蔬批发</span>
+        <img :src="logoUrl" alt="logo" />
+        <span v-if="!isCollapse">{{ siteName }}</span>
       </div>
-      <el-menu
-          :default-active="activeMenu"
-          :collapse="isCollapse"
-          :collapse-transition="false"
-          router
-          class="menu"
-      >
-        <el-menu-item index="/">
-          <el-icon><Odometer /></el-icon>
-          <span>仪表盘</span>
-        </el-menu-item>
-
-        <el-sub-menu index="trade">
-          <template #title>
-            <el-icon><ShoppingCart /></el-icon>
-            <span>进销管理</span>
-          </template>
-          <el-menu-item index="/purchase">采购管理</el-menu-item>
-          <el-menu-item index="/sales">销售管理</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="stock">
-          <template #title>
-            <el-icon><Box /></el-icon>
-            <span>商品库存</span>
-          </template>
-          <el-menu-item index="/products">商品管理</el-menu-item>
-          <el-menu-item index="/inventory">库存查看</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="partner">
-          <template #title>
-            <el-icon><UserFilled /></el-icon>
-            <span>往来管理</span>
-          </template>
-          <el-menu-item index="/suppliers">供应商管理</el-menu-item>
-          <el-menu-item index="/customers">客户管理</el-menu-item>
-          <el-menu-item index="/expenses">支出记录</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="reconcile">
-          <template #title>
-            <el-icon><Calendar /></el-icon>
-            <span>月度对账</span>
-          </template>
-                    <el-menu-item index="/monthly-report">农户/客户对账</el-menu-item>
-        </el-sub-menu>
-      </el-menu>
+      <AppSidebarMenu :collapse="isCollapse" />
     </el-aside>
 
     <!-- 移动端抽屉侧边栏 -->
@@ -67,57 +21,10 @@
         class="mobile-drawer"
     >
       <div class="logo drawer-logo">
-        <img src="@/assets/logo.png" alt="logo" />
-        <span>果蔬批发</span>
+        <img :src="logoUrl" alt="logo" />
+        <span>{{ siteName }}</span>
       </div>
-      <el-menu
-          :default-active="activeMenu"
-          :collapse="false"
-          :collapse-transition="false"
-          router
-          class="menu"
-          @select="drawerOpen = false"
-      >
-        <el-menu-item index="/">
-          <el-icon><Odometer /></el-icon>
-          <span>仪表盘</span>
-        </el-menu-item>
-
-        <el-sub-menu index="trade">
-          <template #title>
-            <el-icon><ShoppingCart /></el-icon>
-            <span>进销管理</span>
-          </template>
-          <el-menu-item index="/purchase">采购管理</el-menu-item>
-          <el-menu-item index="/sales">销售管理</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="stock">
-          <template #title>
-            <el-icon><Box /></el-icon>
-            <span>商品库存</span>
-          </template>
-          <el-menu-item index="/products">商品管理</el-menu-item>
-          <el-menu-item index="/inventory">库存查看</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="partner">
-          <template #title>
-            <el-icon><UserFilled /></el-icon>
-            <span>往来管理</span>
-          </template>
-          <el-menu-item index="/suppliers">供应商管理</el-menu-item>
-          <el-menu-item index="/customers">客户管理</el-menu-item>
-          <el-menu-item index="/expenses">支出记录</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="reconcile">
-          <template #title>
-            <el-icon><Calendar /></el-icon>
-            <span>月度对账</span>
-          </template>
-                    <el-menu-item index="/monthly-report">农户/客户对账</el-menu-item>
-        </el-sub-menu>
-      </el-menu>
+      <AppSidebarMenu @select="drawerOpen = false" />
     </el-drawer>
 
     <el-container>
@@ -140,10 +47,12 @@
         </div>
 
         <div class="header-right">
-          <el-dropdown @command="handleCommand">
+          <!-- 桌面端：下拉菜单 -->
+          <el-dropdown v-if="!isMobile" trigger="click" @command="handleCommand">
             <div class="user-info">
               <el-avatar :size="28" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
-              <span v-if="!isMobile" class="user-name">{{ userInfo?.realName || userInfo?.username }}</span>
+              <span class="user-name">{{ userInfo?.realName || userInfo?.username }}</span>
+              <span v-if="tenantName" class="tenant-name">{{ tenantName }}</span>
               <el-icon><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
@@ -153,6 +62,11 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+
+          <!-- 移动端：底部操作栏，避免下拉闪退 -->
+          <div v-else class="user-info mobile-avatar" @click.stop="userSheetOpen = true">
+            <el-avatar :size="32" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
+          </div>
         </div>
       </el-header>
 
@@ -160,6 +74,33 @@
         <router-view />
       </el-main>
     </el-container>
+
+    <ProfileDialog v-model="profileVisible" />
+
+    <el-drawer
+        v-if="isMobile"
+        v-model="userSheetOpen"
+        direction="btt"
+        :with-header="false"
+        :size="sheetHeight"
+        class="user-sheet-drawer"
+        append-to-body
+    >
+      <div class="user-sheet">
+        <div class="user-sheet-head">
+          <el-avatar :size="44" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
+          <div class="user-sheet-meta">
+            <div class="user-sheet-name">{{ userInfo?.realName || userInfo?.username || '用户' }}</div>
+            <div class="user-sheet-account">@{{ userInfo?.username }}</div>
+          </div>
+        </div>
+        <div class="user-sheet-actions">
+          <button type="button" class="sheet-btn" @click="openProfile">个人资料</button>
+          <button type="button" class="sheet-btn danger" @click="confirmLogout">退出登录</button>
+        </div>
+        <button type="button" class="sheet-cancel" @click="userSheetOpen = false">取消</button>
+      </div>
+    </el-drawer>
   </el-container>
 </template>
 
@@ -168,10 +109,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessageBox } from 'element-plus'
-import {
-  Odometer, ShoppingCart, Box, UserFilled, Calendar,
-  Expand, Fold, ArrowDown
-} from '@element-plus/icons-vue'
+import { Expand, Fold, ArrowDown } from '@element-plus/icons-vue'
+import AppSidebarMenu from '@/components/AppSidebarMenu.vue'
+import ProfileDialog from '@/components/ProfileDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -179,10 +119,15 @@ const store = useStore()
 
 const isCollapse = ref(false)
 const drawerOpen = ref(false)
+const profileVisible = ref(false)
+const userSheetOpen = ref(false)
 const isMobile = ref(window.innerWidth < 768)
+const sheetHeight = '220px'
 
 const userInfo = computed(() => store.state.user.userInfo)
-const activeMenu = computed(() => route.path)
+const tenantName = computed(() => store.state.tenant.tenantName)
+const siteName = computed(() => store.state.site.siteName)
+const logoUrl = computed(() => store.getters['site/logoUrl'])
 const breadcrumbs = computed(() => route.matched.filter(item => item.meta.title))
 const currentTitle = computed(() => {
   const last = route.matched.slice().reverse().find(r => r.meta?.title)
@@ -191,13 +136,26 @@ const currentTitle = computed(() => {
 
 const onResize = () => {
   isMobile.value = window.innerWidth < 768
-  if (!isMobile.value) drawerOpen.value = false
+  if (!isMobile.value) {
+    drawerOpen.value = false
+    userSheetOpen.value = false
+  }
 }
 onMounted(() => window.addEventListener('resize', onResize))
 onUnmounted(() => window.removeEventListener('resize', onResize))
 
+const openProfile = () => {
+  userSheetOpen.value = false
+  profileVisible.value = true
+}
+
+const confirmLogout = () => {
+  userSheetOpen.value = false
+  handleLogout()
+}
+
 const handleCommand = (command) => {
-  if (command === 'profile') router.push('/profile')
+  if (command === 'profile') profileVisible.value = true
   else if (command === 'logout') handleLogout()
 }
 
@@ -256,8 +214,6 @@ const handleLogout = async () => {
 :deep(.menu) {
   border-right: none;
   background-color: #304156;
-  height: calc(100vh - 56px);
-  overflow-y: auto;
 
   .el-menu-item,
   .el-sub-menu__title {
@@ -314,8 +270,93 @@ const handleLogout = async () => {
       gap: 6px;
       cursor: pointer;
       .user-name { font-size: 14px; color: #303133; }
+      .tenant-name {
+        font-size: 12px;
+        color: #909399;
+        margin-left: 6px;
+        padding-left: 6px;
+        border-left: 1px solid #ebeef5;
+      }
+    }
+
+    .mobile-avatar {
+      padding: 4px;
+      border-radius: 50%;
+      -webkit-tap-highlight-color: transparent;
+
+      &:active {
+        background: #f5f7fa;
+      }
     }
   }
+}
+
+:deep(.user-sheet-drawer) {
+  .el-drawer__body {
+    padding: 0;
+  }
+}
+
+.user-sheet {
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+}
+
+.user-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 4px 16px;
+  border-bottom: 1px solid #f0f2f5;
+  margin-bottom: 12px;
+}
+
+.user-sheet-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.user-sheet-account {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 2px;
+}
+
+.user-sheet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sheet-btn {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: #f5f7fa;
+  color: #303133;
+  font-size: 15px;
+  cursor: pointer;
+
+  &.danger {
+    color: #f56c6c;
+  }
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.sheet-cancel {
+  width: 100%;
+  height: 44px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+  color: #909399;
+  font-size: 15px;
+  cursor: pointer;
 }
 
 .main {

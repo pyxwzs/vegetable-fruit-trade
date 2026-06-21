@@ -143,7 +143,7 @@
                 <div class="item-row2">
                   <div class="item-field half">
                     <span class="item-label">数量</span>
-                    <el-input v-model.number="row.quantity" type="number" placeholder="0.000" style="width:100%" />
+                    <el-input v-model.number="row.quantity" type="number" placeholder="0.0" style="width:100%" />
                   </div>
                   <div class="item-field half">
                     <span class="item-label">单价(元)</span>
@@ -167,7 +167,7 @@
                 </el-table-column>
                 <el-table-column label="数量" width="120">
                   <template #default="{ row }">
-                    <el-input-number v-model="row.quantity" :min="0.001" :precision="3" style="width: 100%" />
+                    <el-input-number v-model="row.quantity" :min="0.1" :precision="1" :step="0.1" style="width: 100%" />
                   </template>
                 </el-table-column>
                 <el-table-column label="单价(元)" width="130">
@@ -222,7 +222,7 @@
               <template #default="{ row }">{{ row.product?.specification || '-' }}</template>
             </el-table-column>
             <el-table-column label="数量" width="90" align="right">
-              <template #default="{ row }">{{ Number(row.quantity).toFixed(3) }} {{ row.product?.unit }}</template>
+              <template #default="{ row }">{{ Number(row.quantity).toFixed(1) }} {{ row.product?.unit }}</template>
             </el-table-column>
             <el-table-column label="单价" width="80" align="right">
               <template #default="{ row }">¥{{ Number(row.price).toFixed(2) }}</template>
@@ -314,7 +314,7 @@ const isMobile = useIsMobile()
 const loading = ref(false)
 const orders = ref([])
 const page = ref(1)
-const size = ref(10)
+const size = ref(5)
 const total = ref(0)
 const searchKeyword = ref('')
 const status = ref('')

@@ -23,4 +23,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     List<Product> findAllEnabled();
 
     boolean existsByProductCode(String productCode);
+
+    @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL AND p.category <> '' ORDER BY p.category")
+    List<String> findDistinctCategories();
 }

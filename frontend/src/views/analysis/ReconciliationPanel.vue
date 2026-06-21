@@ -31,15 +31,15 @@
       </el-select>
 
       <el-radio-group :model-value="viewMode" @update:model-value="onViewModeChange">
-        <el-radio-button value="year">按年</el-radio-button>
-        <el-radio-button value="month">按月</el-radio-button>
+        <el-radio-button label="year">按年</el-radio-button>
+        <el-radio-button label="month">按月</el-radio-button>
       </el-radio-group>
 
       <el-button type="primary" @click="$emit('query')">查询</el-button>
       <el-button type="success" @click="$emit('export')">{{ exportLabel }}</el-button>
     </div>
 
-    <!-- 未选对象：农户/客户汇总 -->
+    <!-- 未选对象：供应商/客户汇总 -->
     <template v-if="!entityId">
       <div class="summary-section">
         <div class="section-title">
@@ -50,7 +50,7 @@
         </div>
         <div class="table-wrap">
           <el-table
-            :data="partnerRows"
+            :data="partnerRowsPaged"
             border
             size="small"
             highlight-current-row
@@ -72,17 +72,28 @@
             </el-table-column>
           </el-table>
         </div>
+        <el-pagination
+          v-if="partnerRows.length > partnerPageSize"
+          v-model:current-page="partnerPage"
+          v-model:page-size="partnerPageSize"
+          :total="partnerRows.length"
+          :page-sizes="PAGE_SIZES"
+          layout="total, sizes, prev, pager, next"
+          class="pagination"
+          @size-change="onPartnerPageSizeChange"
+        />
         <div class="hint">点击某{{ entityLabel }}查看明细</div>
       </div>
     </template>
 
-    <!-- 已选对象 + 按年：12 个月 -->
+    <!-- 已选对象 + 按年：有数据的月份 -->
     <template v-else-if="viewMode === 'year'">
       <div class="summary-section">
         <div class="section-title">{{ entityName }} · {{ year }}年 各月汇总</div>
         <div class="table-wrap">
           <el-table
-            :data="summaryRows"
+            v-if="summaryRows.length"
+            :data="summaryRowsPaged"
             border
             size="small"
             highlight-current-row
@@ -104,7 +115,18 @@
               </template>
             </el-table-column>
           </el-table>
+          <el-empty v-else description="该年度暂无记录" :image-size="60" />
         </div>
+        <el-pagination
+          v-if="summaryRows.length > summaryPageSize"
+          v-model:current-page="summaryPage"
+          v-model:page-size="summaryPageSize"
+          :total="summaryRows.length"
+          :page-sizes="PAGE_SIZES"
+          layout="total, sizes, prev, pager, next"
+          class="pagination"
+          @size-change="onSummaryPageSizeChange"
+        />
       </div>
       <div v-if="items.length" class="detail-section">
         <div class="section-title">品种明细 <span class="sub">· {{ selectedMonth }}月</span></div>
@@ -118,7 +140,8 @@
         <div class="section-title">{{ entityName }} · {{ year }}年{{ month }}月 每日汇总</div>
         <div class="table-wrap">
           <el-table
-            :data="dailyRows"
+            v-if="dailyRows.length"
+            :data="dailyRowsPaged"
             border
             size="small"
             highlight-current-row
@@ -140,11 +163,22 @@
               </template>
             </el-table-column>
           </el-table>
+          <el-empty v-else description="该月暂无记录" :image-size="60" />
         </div>
-        <div class="day-filter">
+        <el-pagination
+          v-if="dailyRows.length > dailyPageSize"
+          v-model:current-page="dailyPage"
+          v-model:page-size="dailyPageSize"
+          :total="dailyRows.length"
+          :page-sizes="PAGE_SIZES"
+          layout="total, sizes, prev, pager, next"
+          class="pagination"
+          @size-change="onDailyPageSizeChange"
+        />
+        <div v-if="dayDates.length" class="day-filter">
           <span :class="['date-tag', { active: !selectedDay }]" @click="$emit('update:selectedDay', '')">全月</span>
           <span
-            v-for="d in dayDates"
+            v-for="d in dayDatesOnPage"
             :key="d"
             :class="['date-tag', { active: selectedDay === d }]"
             @click="$emit('update:selectedDay', d)"
@@ -164,7 +198,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ReconciliationDetail from './ReconciliationDetail.vue'
 
 const props = defineProps({
@@ -193,6 +227,8 @@ const emit = defineEmits([
 const currentYear = new Date().getFullYear()
 const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
+const PAGE_SIZES = [5, 10, 20]
+
 const fmt = (v) => Number(v || 0).toFixed(2)
 const pendingLabel = computed(() => props.type === 'purchase' ? '未付' : '未收')
 const partnerRows = computed(() => props.partnerReport?.rows || [])
@@ -209,6 +245,57 @@ const exportLabel = computed(() => {
 const dayDates = computed(() =>
   [...new Set((props.dailyRows || []).map(r => r.date).filter(Boolean))].sort()
 )
+
+const partnerPage = ref(1)
+const partnerPageSize = ref(5)
+const summaryPage = ref(1)
+const summaryPageSize = ref(5)
+const dailyPage = ref(1)
+const dailyPageSize = ref(5)
+
+watch(
+  () => [props.partnerReport, props.year, props.month, props.viewMode],
+  () => { partnerPage.value = 1 }
+)
+
+watch(
+  () => [props.summaryRows, props.year, props.entityId],
+  () => { summaryPage.value = 1 }
+)
+
+watch(
+  () => [props.dailyRows, props.month, props.year, props.entityId],
+  () => { dailyPage.value = 1 }
+)
+
+watch(partnerPageSize, () => { partnerPage.value = 1 })
+watch(summaryPageSize, () => { summaryPage.value = 1 })
+watch(dailyPageSize, () => { dailyPage.value = 1 })
+
+const slicePage = (rows, page, size) => {
+  const start = (page - 1) * size
+  return rows.slice(start, start + size)
+}
+
+const partnerRowsPaged = computed(() =>
+  slicePage(partnerRows.value, partnerPage.value, partnerPageSize.value)
+)
+
+const summaryRowsPaged = computed(() =>
+  slicePage(props.summaryRows || [], summaryPage.value, summaryPageSize.value)
+)
+
+const dailyRowsPaged = computed(() =>
+  slicePage(props.dailyRows || [], dailyPage.value, dailyPageSize.value)
+)
+
+const dayDatesOnPage = computed(() =>
+  dailyRowsPaged.value.map(r => r.date).filter(Boolean)
+)
+
+const onPartnerPageSizeChange = () => { partnerPage.value = 1 }
+const onSummaryPageSizeChange = () => { summaryPage.value = 1 }
+const onDailyPageSizeChange = () => { dailyPage.value = 1 }
 
 const onViewModeChange = (mode) => {
   emit('update:viewMode', mode)
@@ -275,5 +362,10 @@ const onViewModeChange = (mode) => {
   cursor: pointer;
   user-select: none;
   &.active { background: #409eff; border-color: #409eff; color: #fff; }
+}
+
+.pagination {
+  margin-top: 10px;
+  justify-content: flex-end;
 }
 </style>

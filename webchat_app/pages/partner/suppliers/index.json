@@ -1,0 +1,11 @@
+{
+  "navigationBarTitleText": "供应商管理",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-popup": "tdesign-miniprogram/popup/popup"
+  }
+}

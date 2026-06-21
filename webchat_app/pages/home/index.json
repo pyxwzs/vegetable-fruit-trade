@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "仪表盘",
+  "navigationBarBackgroundColor": "#0052d9",
+  "navigationBarTextStyle": "white",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  }
+}

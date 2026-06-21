@@ -13,6 +13,7 @@ import java.util.Set;
 @Builder
 public class UserPrincipal implements UserDetails {
     private Long id;
+    private Long tenantId;
     private String username;
 
     @JsonIgnore

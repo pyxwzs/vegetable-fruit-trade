@@ -1,4 +1,4 @@
-import { postLogin, getCurrentUser } from '@/api/user'
+import { postPlatformLogin, getCurrentUser } from '@/api/user'
 
 export default {
     namespaced: true,
@@ -28,8 +28,8 @@ export default {
     },
 
     actions: {
-        async loginStep1({ commit, dispatch }, { username, password, rememberMe }) {
-            const response = await postLogin({ username, password, rememberMe })
+        async loginPlatform({ commit, dispatch }, { account, password, rememberMe }) {
+            const response = await postPlatformLogin({ account, password, rememberMe })
             const d = response.data
             commit('SET_TOKEN', d.token)
             if (d.refreshToken) {
@@ -37,8 +37,13 @@ export default {
             } else {
                 localStorage.removeItem('refreshToken')
             }
+            await dispatch('tenant/setTenant', {
+                tenantId: d.tenantId,
+                tenantCode: d.tenantCode,
+                tenantName: d.tenantName
+            }, { root: true })
+            await dispatch('site/load', d.tenantCode, { root: true })
             await dispatch('getUserInfo')
-            return { needMfa: false }
         },
 
         async getUserInfo({ commit }) {
@@ -48,13 +53,21 @@ export default {
             return userInfo
         },
 
-        logout({ commit }) {
+        logout({ commit, dispatch }) {
             commit('CLEAR_USER')
+            dispatch('tenant/clearTenant', null, { root: true })
+            dispatch('site/reset', null, { root: true })
         }
     },
 
     getters: {
         isLoggedIn: state => !!state.token,
-        hasPermission: () => () => true
+        menuKeys: state => state.userInfo?.menuKeys || null,
+        isMenuEnabled: state => (key) => {
+            const keys = state.userInfo?.menuKeys
+            if (!keys || keys.length === 0) return true
+            return keys.includes(key)
+        },
+        isPlatformAdmin: state => state.userInfo?.role === 'PLATFORM_ADMIN'
     }
 }

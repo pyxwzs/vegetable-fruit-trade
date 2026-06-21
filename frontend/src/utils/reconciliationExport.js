@@ -48,30 +48,31 @@ function styleCell(ws, r, c, patch) {
 }
 
 /** 数字列必须指定格式，否则 WPS/Excel 会把 250 当成日期序列号显示成 1900-08-12 */
-function applyMonthNumberFormats(ws, { year, month, daysInMonth, productCount }) {
+function applyMonthNumberFormats(ws, { dataDates, productCount }) {
   const totalCol = 1 + productCount * 3
-  for (let d = 1; d <= daysInMonth; d++) {
-    const r = 1 + d
-    styleCell(ws, r, 0, { t: 'n', v: excelSerial(year, month, d), z: 'yyyy-mm-dd' })
+  dataDates.forEach((dateStr, idx) => {
+    const r = 2 + idx
+    const [y, m, d] = dateStr.split('-').map(Number)
+    styleCell(ws, r, 0, { t: 'n', v: excelSerial(y, m, d), z: 'yyyy-mm-dd' })
     for (let p = 0; p < productCount; p++) {
       const base = 1 + p * 3
-      styleCell(ws, r, base, { z: '0.000' })
+      styleCell(ws, r, base, { z: '0.0' })
       styleCell(ws, r, base + 1, { z: '0.00' })
       styleCell(ws, r, base + 2, { z: '0.00' })
     }
     styleCell(ws, r, totalCol, { z: '0.00' })
-  }
-  const totalRow = 2 + daysInMonth
+  })
+  const totalRow = 2 + dataDates.length
   for (let p = 0; p < productCount; p++) {
     const base = 1 + p * 3
-    styleCell(ws, totalRow, base, { z: '0.000' })
+    styleCell(ws, totalRow, base, { z: '0.0' })
     styleCell(ws, totalRow, base + 1, { z: '0.00' })
     styleCell(ws, totalRow, base + 2, { z: '0.00' })
   }
   styleCell(ws, totalRow, totalCol, { z: '0.00' })
 }
 
-function applySheetMeta(ws, { year, month, daysInMonth, productCount }) {
+function applySheetMeta(ws, { dataDates, productCount }) {
   ws['!merges'] = buildMerges(productCount)
   const colWidths = [{ wch: 12 }]
   for (let i = 0; i < productCount; i++) {
@@ -81,7 +82,7 @@ function applySheetMeta(ws, { year, month, daysInMonth, productCount }) {
   ws['!cols'] = colWidths
 
   applyCenterAlign(ws)
-  applyMonthNumberFormats(ws, { year, month, daysInMonth, productCount })
+  applyMonthNumberFormats(ws, { dataDates, productCount })
 }
 
 function buildProductUnits(items) {
@@ -103,10 +104,9 @@ function priceLabel(unit) {
 const AMOUNT_LABEL = '金额(元)'
 
 /** 按月对账表：品种名 + 重量(单位)/单价(元/单位)/金额(元) */
-export function buildMonthSheetAoa(items, { year, month }) {
+export function buildMonthSheetAoa(items) {
   const products = [...new Set((items || []).map(i => i.productName).filter(Boolean))].sort()
   const productUnits = buildProductUnits(items)
-  const daysInMonth = new Date(year, month, 0).getDate()
 
   const byDateProduct = {}
   for (const item of items || []) {
@@ -118,6 +118,10 @@ export function buildMonthSheetAoa(items, { year, month }) {
     byDateProduct[date][name].qty += Number(item.quantity || 0)
     byDateProduct[date][name].amount += Number(item.amount || 0)
   }
+
+  const dataDates = Object.keys(byDateProduct)
+    .filter(d => Object.values(byDateProduct[d]).some(c => c.qty > 0 || c.amount > 0))
+    .sort()
 
   const row1 = ['']
   for (const p of products) row1.push(p, '', '')
@@ -134,8 +138,7 @@ export function buildMonthSheetAoa(items, { year, month }) {
   const productTotals = Object.fromEntries(products.map(p => [p, { qty: 0, amount: 0 }]))
   let grandTotal = 0
 
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+  for (const dateStr of dataDates) {
     const row = ['']
     let dayTotal = 0
 
@@ -145,7 +148,7 @@ export function buildMonthSheetAoa(items, { year, month }) {
       const amount = cell?.amount || 0
       const price = qty > 0 ? amount / qty : 0
       row.push(
-        qty ? Number(qty.toFixed(3)) : '',
+        qty ? Number(qty.toFixed(1)) : '',
         price ? Number(price.toFixed(2)) : '',
         amount ? Number(amount.toFixed(2)) : ''
       )
@@ -163,7 +166,7 @@ export function buildMonthSheetAoa(items, { year, month }) {
     const t = productTotals[p]
     const price = t.qty > 0 ? t.amount / t.qty : 0
     totalRow.push(
-      t.qty ? Number(t.qty.toFixed(3)) : '',
+      t.qty ? Number(t.qty.toFixed(1)) : '',
       price ? Number(price.toFixed(2)) : '',
       t.amount ? Number(t.amount.toFixed(2)) : ''
     )
@@ -171,20 +174,25 @@ export function buildMonthSheetAoa(items, { year, month }) {
   totalRow.push(Number(grandTotal.toFixed(2)))
   rows.push(totalRow)
 
-  return { rows, productCount: products.length, daysInMonth, monthTotal: grandTotal }
+  return {
+    rows,
+    productCount: products.length,
+    dataDates,
+    monthTotal: grandTotal,
+    hasData: dataDates.length > 0
+  }
 }
 
-function buildYearSummarySheetAoa(monthTotals, { entityName, year, type }) {
+function buildYearSummarySheetAoa(monthEntries, { entityName, year, type }) {
   const label = type === 'purchase' ? '采购' : '销售'
   const rows = [
     [`${entityName} · ${year}年${label}月度汇总`],
     ['月份', '金额(元)']
   ]
   let yearTotal = 0
-  for (let m = 1; m <= 12; m++) {
-    const amt = monthTotals[m - 1] || 0
-    yearTotal += amt
-    rows.push([`${m}月`, amt ? Number(amt.toFixed(2)) : ''])
+  for (const { month, amount } of monthEntries) {
+    yearTotal += amount
+    rows.push([`${month}月`, Number(amount.toFixed(2))])
   }
   rows.push(['总计', Number(yearTotal.toFixed(2))])
   return rows
@@ -204,12 +212,14 @@ function applySummarySheetMeta(ws) {
 export function downloadMonthExcel(items, opts) {
   const { entityName, year, month, type } = opts
   const label = type === 'purchase' ? '采购' : '销售'
-  const { rows, productCount, daysInMonth } = buildMonthSheetAoa(items, { year, month })
+  const { rows, productCount, dataDates, hasData } = buildMonthSheetAoa(items)
+  if (!hasData) return false
   const ws = XLSX.utils.aoa_to_sheet(rows)
-  applySheetMeta(ws, { year, month, daysInMonth, productCount })
+  applySheetMeta(ws, { dataDates, productCount })
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, `${month}月`)
   XLSX.writeFile(wb, `${entityName}_${year}年${month}月${label}对账.xlsx`)
+  return true
 }
 
 export async function downloadYearExcel(fetchMonthItems, opts) {
@@ -221,30 +231,35 @@ export async function downloadYearExcel(fetchMonthItems, opts) {
     Array.from({ length: 12 }, (_, i) => fetchMonthItems(year, i + 1))
   )
 
-  const monthSheets = monthData.map((items, idx) => {
-    const month = idx + 1
-    return buildMonthSheetAoa(items, { year, month })
-  })
+  const monthSheets = monthData
+    .map((items, idx) => ({
+      month: idx + 1,
+      ...buildMonthSheetAoa(items)
+    }))
+    .filter(s => s.hasData)
 
-  const monthTotals = monthSheets.map(s => s.monthTotal)
+  if (!monthSheets.length) return false
 
   const summaryWs = XLSX.utils.aoa_to_sheet(
-    buildYearSummarySheetAoa(monthTotals, { entityName, year, type })
+    buildYearSummarySheetAoa(
+      monthSheets.map(s => ({ month: s.month, amount: s.monthTotal })),
+      { entityName, year, type }
+    )
   )
   applySummarySheetMeta(summaryWs)
   XLSX.utils.book_append_sheet(wb, summaryWs, '年度汇总')
 
-  monthSheets.forEach(({ rows, productCount, daysInMonth }, idx) => {
-    const month = idx + 1
+  monthSheets.forEach(({ rows, productCount, dataDates, month }) => {
     const ws = XLSX.utils.aoa_to_sheet(rows)
-    applySheetMeta(ws, { year, month, daysInMonth, productCount })
+    applySheetMeta(ws, { dataDates, productCount })
     XLSX.utils.book_append_sheet(wb, ws, `${month}月`)
   })
 
   XLSX.writeFile(wb, `${entityName}_${year}年${label}对账.xlsx`)
+  return true
 }
 
-/** 导出农户/客户汇总表 */
+/** 导出供应商/客户汇总表 */
 export function downloadPartnerListExcel(report, { type, periodLabel }) {
   const label = type === 'purchase' ? '采购' : '销售'
   const settledLabel = type === 'purchase' ? '已付' : '已收'

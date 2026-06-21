@@ -1,0 +1,277 @@
+@import '../../variable.less';
+
+.dashboard {
+  padding: 16rpx 20rpx;
+  padding-bottom: calc(@tab-bar-height + env(safe-area-inset-bottom) + 16rpx);
+  background: #f5f7fa;
+  box-sizing: border-box;
+}
+
+/* ── 利润卡片 ── */
+.hero-card {
+  background: linear-gradient(135deg, #0052d9 0%, #366ef4 100%);
+  border-radius: 20rpx;
+  padding: 20rpx 18rpx 18rpx;
+  color: #fff;
+  margin-bottom: 16rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 82, 217, 0.18);
+}
+
+.hero-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.hero-month {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.hero-head-tag {
+  font-size: 20rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.hero-row {
+  display: flex;
+  gap: 12rpx;
+}
+
+.hero-block {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 16rpx;
+  padding: 16rpx 14rpx;
+  min-width: 0;
+}
+
+.hero-label {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.hero-sub {
+  margin-top: 4rpx;
+  font-size: 18rpx;
+  opacity: 0.82;
+}
+
+.hero-value {
+  margin-top: 12rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.hero-value.negative {
+  color: #ffd8d2;
+}
+
+.breakdown {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.16);
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8rpx;
+  font-size: 20rpx;
+  opacity: 0.88;
+  line-height: 1.6;
+}
+
+/* ── 关键指标 ── */
+.metric-card {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.metric-cell {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 18rpx 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.metric-cell:active {
+  opacity: 0.92;
+}
+
+.metric-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.metric-value {
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.metric-value.danger {
+  color: #e34d59;
+}
+
+.metric-value.profit {
+  color: #2ba471;
+}
+
+.metric-value.purple {
+  color: #7b61ff;
+}
+
+/* ── 快捷入口 ── */
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.shortcut-item {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 18rpx 8rpx 14rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.shortcut-item--hover {
+  opacity: 0.92;
+}
+
+.shortcut-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10rpx;
+}
+
+.shortcut-text {
+  font-size: 24rpx;
+  color: #333;
+}
+
+/* ── 待办 ── */
+.todo-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx 20rpx 8rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.todo-head {
+  margin-bottom: 8rpx;
+}
+
+.todo-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: @gy1;
+}
+
+.todo-section {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.todo-section--last {
+  border-bottom: none;
+  padding-bottom: 12rpx;
+}
+
+.todo-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.todo-section-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.todo-section-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.todo-badge {
+  font-size: 22rpx;
+  color: #0052d9;
+  background: #ecf2fe;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+}
+
+.todo-link {
+  font-size: 24rpx;
+  color: @brand7-normal;
+  flex-shrink: 0;
+}
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 10rpx 0;
+  font-size: 26rpx;
+}
+
+.todo-name {
+  flex: 1;
+  min-width: 0;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo-date {
+  font-size: 22rpx;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.todo-amount {
+  font-weight: 600;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.todo-amount.danger {
+  color: #e34d59;
+}
+
+.todo-empty {
+  padding: 8rpx 0 4rpx;
+  font-size: 24rpx;
+  color: #bbb;
+}
+
+.loading {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
